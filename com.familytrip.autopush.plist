@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.familytrip.autopush</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/bin/bash</string>
+        <string>/Users/andrewclark/Desktop/family-trip-2026/auto-push.sh</string>
+    </array>
+
+    <!-- Start when you log in and restart if it ever crashes -->
+    <key>RunAtLoad</key>
+    <true/>
+    <key>KeepAlive</key>
+    <true/>
+
+    <!-- Include Homebrew paths so fswatch is found -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin</string>
+    </dict>
+
+    <!-- Logs — view with: tail -f /tmp/familytrip-autopush.log -->
+    <key>StandardOutPath</key>
+    <string>/tmp/familytrip-autopush.log</string>
+    <key>StandardErrorPath</key>
+    <string>/tmp/familytrip-autopush.log</string>
+</dict>
+</plist>
