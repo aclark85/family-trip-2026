@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Trip Admin · Quick Edit</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --andrew:#3B82F6;--max:#16A34A;--joshua:#EA580C;--harriet:#9333EA;
+  --border:#E2E8F0;--bg:#F0F4F8;--surface:#fff;--text:#1E293B;--muted:#64748B;--hdr:#1E293B;
+  --flight:#EFF6FF;--transport:#F1F5F9;--accommodation:#F0FDF4;
+  --meal:#FFFBEB;--activity:#FAF5FF;--other:#F8FAFC;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);font-size:13px;height:100vh;display:flex;flex-direction:column;overflow:hidden}
+
+/* ── GATE ── */
+#gate{position:fixed;inset:0;background:#0f172a;display:flex;align-items:center;justify-content:center;z-index:999}
+.gate-card{background:#1e293b;border:1px solid #334155;border-radius:16px;padding:40px 48px;text-align:center;min-width:320px}
+.gate-card h1{color:#f1f5f9;font-size:1.4rem;margin-bottom:6px}
+.gate-card p{color:#94a3b8;font-size:.85rem;margin-bottom:24px}
+#pwInput{width:100%;padding:10px 14px;border-radius:8px;border:1px solid #475569;background:#0f172a;color:#f1f5f9;font-size:1rem;outline:none;text-align:center;letter-spacing:.2em;margin-bottom:10px}
+#pwInput:focus{border-color:#3b82f6}
+.gate-btn{width:100%;padding:11px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:.95rem;font-weight:700;cursor:pointer}
+.gate-btn:hover{background:#2563eb}
+#pwErr{color:#f87171;font-size:.8rem;margin-top:8px;min-height:18px}
+
+/* ── APP ── */
+#app{display:none;flex-direction:column;height:100vh}
+
+/* ── HEADER ── */
+header{background:var(--hdr);color:#fff;padding:10px 18px;display:flex;align-items:center;gap:12px;flex-shrink:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.25)}
+.h-title{font-size:15px;font-weight:700;flex:1}
+.h-back{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.2);color:#fff;padding:5px 12px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;text-decoration:none}
+.h-back:hover{background:rgba(255,255,255,.22)}
+
+/* ── TOOLBAR ── */
+.toolbar{background:#fff;padding:8px 18px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;border-bottom:1px solid var(--border);flex-shrink:0}
+.tb-search{flex:1;min-width:160px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;outline:none}
+.tb-search:focus{border-color:#3b82f6}
+.tb-sel{padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:12px;background:#fff;cursor:pointer;outline:none}
+.tb-sel:focus{border-color:#3b82f6}
+.count-lbl{font-size:11px;color:var(--muted);font-weight:600;white-space:nowrap}
+.add-btn{background:#22c55e;color:#fff;border:none;padding:6px 14px;border-radius:6px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;margin-left:auto}
+.add-btn:hover{background:#16a34a}
+
+/* ── TABLE WRAPPER ── */
+.tbl-wrap{flex:1;overflow:auto}
+table{width:100%;border-collapse:collapse;min-width:1000px}
+
+/* ── HEAD ── */
+thead{position:sticky;top:0;z-index:5}
+thead tr{background:var(--hdr)}
+th{padding:8px 6px;font-size:10px;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;text-align:left}
+th:first-child{padding-left:14px}
+th:last-child{padding-right:14px}
+th.th-ctr{text-align:center}
+
+/* ── ROWS ── */
+tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
+tbody tr[data-cat=flight]        {background:var(--flight)}
+tbody tr[data-cat=transport]     {background:var(--transport)}
+tbody tr[data-cat=accommodation] {background:var(--accommodation)}
+tbody tr[data-cat=meal]          {background:var(--meal)}
+tbody tr[data-cat=activity]      {background:var(--activity)}
+tbody tr[data-cat=other]         {background:var(--other)}
+tbody tr:hover{filter:brightness(.97)}
+
+/* ── CELL INPUTS ── */
+td{padding:4px 5px;vertical-align:middle}
+td:first-child{padding-left:14px}
+td:last-child{padding-right:14px}
+.ci{width:100%;border:1px solid transparent;border-radius:4px;padding:4px 5px;font-size:12px;font-family:inherit;background:transparent;color:var(--text);outline:none;transition:border .1s}
+.ci:hover{border-color:var(--border)}
+.ci:focus{border-color:#3b82f6;background:#fff;box-shadow:0 0 0 2px rgba(59,130,246,.12)}
+input[type=date].ci,input[type=time].ci{cursor:pointer;min-width:0}
+select.ci{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748B'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 6px center;padding-right:20px}
+.td-date{width:110px}
+.td-enddate{width:110px}
+.td-time{width:74px}
+.td-title{min-width:180px}
+.td-cat{width:130px}
+.td-loc{min-width:130px}
+.td-who{width:88px}
+.td-notes{min-width:130px}
+.td-att{width:30px;text-align:center}
+.td-st{width:24px;text-align:center}
+.td-del{width:30px;text-align:center}
+
+/* ── CATEGORY SELECT COLORS ── */
+select.cat-flight        {color:#1d4ed8}
+select.cat-transport     {color:#334155}
+select.cat-accommodation {color:#15803d}
+select.cat-meal          {color:#b45309}
+select.cat-activity      {color:#7c3aed}
+select.cat-other         {color:#475569}
+
+/* ── PERSON TOGGLES ── */
+.who-cell{display:flex;gap:3px;justify-content:center}
+.who-btn{width:19px;height:19px;border:2px solid;border-radius:4px;cursor:pointer;font-size:9px;font-weight:800;display:flex;align-items:center;justify-content:center;transition:all .12s;padding:0;line-height:1;flex-shrink:0}
+.who-btn.off{background:transparent}
+.who-btn.on{color:#fff}
+
+/* ── STATUS DOT ── */
+.sdot{font-size:14px;line-height:1;display:block;text-align:center}
+.sdot.saving{color:#f59e0b;animation:spin .8s linear infinite}
+.sdot.ok{color:#22c55e}
+.sdot.err{color:#ef4444}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── DELETE BTN ── */
+.del-btn{background:none;border:none;cursor:pointer;font-size:14px;color:#cbd5e1;padding:2px 4px;border-radius:4px;transition:all .12s}
+.del-btn:hover{color:#ef4444;background:#fee2e2}
+
+/* ── NEW ROW FLASH ── */
+@keyframes newrow{0%{background:#dbeafe}100%{}}
+.new-flash{animation:newrow .8s ease-out}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:60px;color:var(--muted);font-size:.9rem}
+
+/* ── RECEIPT LINK ── */
+.att-link{font-size:16px;text-decoration:none;display:inline-block}
+.att-link:hover{transform:scale(1.2)}
+
+/* ── TIMEZONE ── */
+.td-tz{width:120px}
+select.ci.tz{font-size:11px}
+</style>
+</head>
+<body>
+
+<!-- PASSWORD GATE -->
+<div id="gate">
+  <div class="gate-card">
+    <h1>✏️ Trip Admin</h1>
+    <p>Enter the edit password to access the mass event editor</p>
+    <input id="pwInput" type="password" placeholder="Password" autocomplete="current-password">
+    <button class="gate-btn" onclick="checkPw()">Unlock</button>
+    <div id="pwErr"></div>
+  </div>
+</div>
+
+<!-- MAIN APP -->
+<div id="app">
+  <header>
+    <div class="h-title">✏️ Trip Admin &mdash; Quick Edit</div>
+    <a class="h-back" href="index.html">← Back to Calendar</a>
+  </header>
+
+  <div class="toolbar">
+    <input id="searchInput" class="tb-search" type="search" placeholder="Search title or location…" oninput="applyFilters()">
+    <select id="fpFilter" class="tb-sel" onchange="applyFilters()">
+      <option value="all">All people</option>
+      <option value="andrew">Andrew</option>
+      <option value="max">Max</option>
+      <option value="joshua">Joshua</option>
+      <option value="harriet">Harriet</option>
+      <option value="mamgu">Mamgu</option>
+      <option value="tadcu">Tadcu</option>
+      <option value="meg">Meg</option>
+      <option value="patrick">Patrick</option>
+      <option value="granny">Granny</option>
+      <option value="granda">Granda</option>
+      <option value="gangan">Gan Gan</option>
+      <option value="elaine">Elaine &amp; Fam</option>
+    </select>
+    <select id="fcFilter" class="tb-sel" onchange="applyFilters()">
+      <option value="all">All categories</option>
+      <option value="flight">✈️ Flight</option>
+      <option value="transport">🚗 Transport</option>
+      <option value="accommodation">🏠 Accommodation</option>
+      <option value="meal">🍽️ Meal</option>
+      <option value="activity">🎯 Activity</option>
+      <option value="other">• Other</option>
+    </select>
+    <span id="countLbl" class="count-lbl"></span>
+    <button class="add-btn" onclick="addEvent()">+ New Event</button>
+  </div>
+
+  <div class="tbl-wrap">
+    <table id="evTable">
+      <thead>
+        <tr>
+          <th class="td-date" onclick="sortBy('date')" style="cursor:pointer" title="Sort by date">Date ↕</th>
+          <th class="td-enddate">End Date</th>
+          <th class="td-time">Start</th>
+          <th class="td-time">End Time</th>
+          <th class="td-title">Title</th>
+          <th class="td-cat">Category</th>
+          <th class="td-loc">Location</th>
+          <th class="td-tz">Timezone</th>
+          <th class="td-who th-ctr">Who</th>
+          <th class="td-notes">Notes</th>
+          <th class="td-att th-ctr">📎</th>
+          <th class="td-st th-ctr"></th>
+          <th class="td-del th-ctr"></th>
+        </tr>
+      </thead>
+      <tbody id="evBody">
+        <tr><td colspan="13" class="empty">Loading events…</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+const SB_URL  = 'https://unwmobhkyivodnvvrhgk.supabase.co';
+const SB_KEY  = 'sb_publishable_yq-uPMf6FVMgEejfe3FSlQ_ljvKYjDl';
+const PW_HASH = '7dce034e548b1e319664a6f0d28c30d61f3c5fb9765b76aa8c73bd5e391302fc';
+
+const TZ_DEFAULT = 'Europe/London';
+const TZ_OPTIONS = [
+  {id:'Europe/London',       label:'London'},
+  {id:'America/Los_Angeles', label:'LA (PST/PDT)'},
+  {id:'America/New_York',    label:'New York'},
+  {id:'UTC',                 label:'UTC'},
+];
+
+const PERSONS = [
+  {id:'andrew',  name:'Andrew',       color:'#3B82F6'},
+  {id:'max',     name:'Max',          color:'#16A34A'},
+  {id:'joshua',  name:'Joshua',       color:'#EA580C'},
+  {id:'harriet', name:'Harriet',      color:'#9333EA'},
+  {id:'mamgu',   name:'Mamgu',        color:'#EC4899'},
+  {id:'tadcu',   name:'Tadcu',        color:'#06B6D4'},
+  {id:'meg',     name:'Meg',          color:'#F59E0B'},
+  {id:'patrick', name:'Patrick',      color:'#14B8A6'},
+  {id:'granny',  name:'Granny',       color:'#BE185D'},
+  {id:'granda',  name:'Granda',       color:'#64748B'},
+  {id:'gangan',  name:'Gan Gan',      color:'#DC2626'},
+  {id:'elaine',  name:'Elaine & Fam', color:'#1D4ED8'},
+];
+const CATS = ['flight','transport','accommodation','meal','activity','other'];
+const CAT_ICONS = {flight:'✈️',transport:'🚗',accommodation:'🏠',meal:'🍽️',activity:'🎯',other:'•'};
+
+let sb, allEvents = [], saveTimers = {};
+let sortCol = 'date', sortAsc = true;
+let filterPerson = 'all', filterCat = 'all', searchQ = '';
+
+// ── BOOT ────────────────────────────────────────────────────────
+async function init(){
+  sb = supabase.createClient(SB_URL, SB_KEY);
+  await loadAll();
+  renderTable();
+}
+
+async function loadAll(){
+  const {data, error} = await sb.from('events').select('*')
+    .not('title','eq','__DEST_CONFIG__')
+    .order('date').order('start_time');
+  if(!error) allEvents = data||[];
+}
+
+// ── FILTER & SORT ────────────────────────────────────────────────
+function applyFilters(){
+  filterPerson = document.getElementById('fpFilter').value;
+  filterCat    = document.getElementById('fcFilter').value;
+  searchQ      = document.getElementById('searchInput').value.toLowerCase();
+  renderTable();
+}
+
+function sortBy(col){
+  if(sortCol===col) sortAsc=!sortAsc;
+  else { sortCol=col; sortAsc=true; }
+  renderTable();
+}
+
+function getFiltered(){
+  let evs = [...allEvents];
+  if(filterPerson!=='all') evs=evs.filter(e=>(e.persons||[]).includes(filterPerson));
+  if(filterCat!=='all')    evs=evs.filter(e=>e.category===filterCat);
+  if(searchQ) evs=evs.filter(e=>(e.title||'').toLowerCase().includes(searchQ)||(e.location||'').toLowerCase().includes(searchQ)||(e.notes||'').toLowerCase().includes(searchQ));
+  evs.sort((a,b)=>{
+    let av=a[sortCol]||'', bv=b[sortCol]||'';
+    if(av<bv) return sortAsc?-1:1;
+    if(av>bv) return sortAsc?1:-1;
+    return (a.start_time||'').localeCompare(b.start_time||'');
+  });
+  return evs;
+}
+
+// ── RENDER ───────────────────────────────────────────────────────
+function renderTable(){
+  const evs = getFiltered();
+  document.getElementById('countLbl').textContent = `${evs.length} event${evs.length!==1?'s':''}`;
+  if(!evs.length){
+    document.getElementById('evBody').innerHTML = `<tr><td colspan="13" class="empty">No events match your filters</td></tr>`;
+    return;
+  }
+  document.getElementById('evBody').innerHTML = evs.map(buildRow).join('');
+}
+
+function buildRow(ev){
+  const pid  = ev.id;
+  const pers = ev.persons||[];
+
+  const whoHtml = PERSONS.map(p=>{
+    const on = pers.includes(p.id);
+    return `<button class="who-btn ${on?'on':'off'}"
+      data-p="${p.id}" title="${p.name}"
+      style="border-color:${p.color};${on?`background:${p.color};color:#fff`:`color:${p.color}`}"
+      onclick="togglePerson('${pid}','${p.id}',this)">${p.name[0]}</button>`;
+  }).join('');
+
+  const catOpts = CATS.map(c=>
+    `<option value="${c}"${ev.category===c?' selected':''}>${CAT_ICONS[c]} ${c}</option>`
+  ).join('');
+
+  const attHtml = ev.attachment_url
+    ? `<a class="att-link" href="#" onclick="openReceipt('${esc(ev.attachment_url)}');return false" title="${esc(ev.attachment_name||'Receipt')}">📎</a>`
+    : `<span style="color:#cbd5e1;font-size:12px">—</span>`;
+
+  return `<tr data-id="${pid}" data-cat="${ev.category||'other'}" id="row-${pid}">
+    <td class="td-date"><input class="ci" type="date" value="${ev.date||''}" onchange="fc('${pid}','date',this.value)"></td>
+    <td class="td-enddate"><input class="ci" type="date" value="${ev.end_date||''}" title="End date (leave blank if same day)" onchange="fc('${pid}','end_date',this.value||null)"></td>
+    <td class="td-time"><input class="ci" type="time" value="${ev.start_time||''}" onchange="fc('${pid}','start_time',this.value)"></td>
+    <td class="td-time"><input class="ci" type="time" value="${ev.end_time||''}" onchange="fc('${pid}','end_time',this.value)"></td>
+    <td class="td-title"><input class="ci" type="text" value="${esc(ev.title)}" oninput="fc('${pid}','title',this.value)" placeholder="Event title"></td>
+    <td class="td-cat"><select class="ci cat-${ev.category||'other'}" onchange="fc('${pid}','category',this.value);this.className='ci cat-'+this.value;document.getElementById('row-${pid}').dataset.cat=this.value">${catOpts}</select></td>
+    <td class="td-loc"><input class="ci" type="text" value="${esc(ev.location||'')}" oninput="fc('${pid}','location',this.value)" placeholder="Location"></td>
+    <td class="td-tz"><select class="ci tz" onchange="fc('${pid}','timezone',this.value)">${TZ_OPTIONS.map(t=>`<option value="${t.id}"${(ev.timezone||TZ_DEFAULT)===t.id?' selected':''}>${t.label}</option>`).join('')}</select></td>
+    <td class="td-who"><div class="who-cell">${whoHtml}</div></td>
+    <td class="td-notes"><input class="ci" type="text" value="${esc(ev.notes||'')}" oninput="fc('${pid}','notes',this.value)" placeholder="Notes"></td>
+    <td class="td-att" style="text-align:center">${attHtml}</td>
+    <td class="td-st"><span class="sdot" id="sdot-${pid}">·</span></td>
+    <td class="td-del"><button class="del-btn" onclick="deleteRow('${pid}')" title="Delete event">✕</button></td>
+  </tr>`;
+}
+
+// ── FIELD CHANGE (debounced) ──────────────────────────────────────
+function fc(id, field, value){
+  const ev = allEvents.find(e=>e.id===id);
+  if(!ev) return;
+  ev[field] = value || null;
+  setStatus(id,'saving');
+  clearTimeout(saveTimers[id]);
+  saveTimers[id] = setTimeout(()=>saveRow(id), 700);
+}
+
+// ── PERSON TOGGLE ─────────────────────────────────────────────────
+function togglePerson(id, personId, btn){
+  const ev = allEvents.find(e=>e.id===id);
+  if(!ev) return;
+  const pers = [...(ev.persons||[])];
+  const idx  = pers.indexOf(personId);
+  if(idx>=0) pers.splice(idx,1);
+  else pers.push(personId);
+  ev.persons = pers;
+
+  const p = PERSONS.find(x=>x.id===personId);
+  if(pers.includes(personId)){
+    btn.classList.replace('off','on');
+    btn.style.background = p.color;
+    btn.style.color = '#fff';
+  } else {
+    btn.classList.replace('on','off');
+    btn.style.background = 'transparent';
+    btn.style.color = p.color;
+  }
+  setStatus(id,'saving');
+  clearTimeout(saveTimers[id]);
+  saveTimers[id] = setTimeout(()=>saveRow(id), 700);
+}
+
+// ── SAVE ROW ─────────────────────────────────────────────────────
+async function saveRow(id){
+  const ev = allEvents.find(e=>e.id===id);
+  if(!ev) return;
+  const payload = {...ev};
+  delete payload.id;
+  if(!payload.end_time) payload.end_time = null;
+  const {error} = await sb.from('events').update(payload).eq('id',id);
+  setStatus(id, error?'err':'ok');
+  if(!error) setTimeout(()=>setStatus(id,'idle'), 2500);
+}
+
+// ── DELETE ROW ───────────────────────────────────────────────────
+async function deleteRow(id){
+  const ev = allEvents.find(e=>e.id===id);
+  if(!confirm(`Delete "${ev?.title||'this event'}"?`)) return;
+  const {error} = await sb.from('events').delete().eq('id',id);
+  if(!error){
+    allEvents = allEvents.filter(e=>e.id!==id);
+    document.getElementById(`row-${id}`)?.remove();
+    document.getElementById('countLbl').textContent =
+      `${getFiltered().length} event${getFiltered().length!==1?'s':''}`;
+  }
+}
+
+// ── ADD EVENT ────────────────────────────────────────────────────
+async function addEvent(){
+  const {data, error} = await sb.from('events').insert([{
+    title: 'New event',
+    date: '2026-06-29',
+    start_time: '12:00',
+    end_time: null,
+    persons: ['andrew','max','joshua','harriet'],
+    category: 'activity',
+    location: '',
+    notes: '',
+    timezone: TZ_DEFAULT,
+    is_seeded: false,
+  }]).select().single();
+  if(error){ alert('Could not create event: '+error.message); return; }
+  allEvents.unshift(data);
+  renderTable();
+  const row = document.getElementById(`row-${data.id}`);
+  if(row){
+    row.classList.add('new-flash');
+    row.querySelector('input[type=text]')?.focus();
+    row.scrollIntoView({behavior:'smooth',block:'nearest'});
+  }
+}
+
+// ── STATUS ───────────────────────────────────────────────────────
+function setStatus(id, state){
+  const el = document.getElementById(`sdot-${id}`);
+  if(!el) return;
+  const map = {saving:['⟳','saving'], ok:['✓','ok'], err:['❌','err'], idle:['·','']};
+  const [txt, cls] = map[state]||['·',''];
+  el.textContent = txt;
+  el.className = 'sdot' + (cls?' '+cls:'');
+}
+
+// ── RECEIPT VIEWER ────────────────────────────────────────────────
+async function openReceipt(url){
+  const win = window.open('','_blank');
+  if(!win){ alert('Allow popups to view receipts'); return; }
+  win.document.write('<html><body style="font-family:sans-serif;padding:24px;color:#666">Loading…</body></html>');
+  try{
+    const resp = await fetch(url);
+    const html = await resp.text();
+    win.document.open(); win.document.write(html); win.document.close();
+  } catch(e){
+    win.document.open();
+    win.document.write(`<html><body style="font-family:sans-serif;padding:32px"><h2>Unable to load</h2><p>${e.message}</p><a href="${url}" target="_blank">Open directly</a></body></html>`);
+    win.document.close();
+  }
+}
+
+// ── PASSWORD ─────────────────────────────────────────────────────
+async function sha256(msg){
+  const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+async function checkPw(){
+  const hash = await sha256(document.getElementById('pwInput').value);
+  if(hash===PW_HASH){
+    document.getElementById('gate').style.display='none';
+    document.getElementById('app').style.display='flex';
+    document.getElementById('app').style.flexDirection='column';
+    init();
+  } else {
+    document.getElementById('pwErr').textContent='Incorrect password';
+    document.getElementById('pwInput').value='';
+    document.getElementById('pwInput').focus();
+  }
+}
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter'){
+    const gate = document.getElementById('gate');
+    if(gate.style.display!=='none') checkPw();
+  }
+});
+
+// ── HELPERS ──────────────────────────────────────────────────────
+function esc(s){ return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+</script>
+</body>
+</html>

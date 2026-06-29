@@ -1,0 +1,1815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Family Trip 2026</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --andrew:#3B82F6;--andrew-l:#EFF6FF;
+  --max:#16A34A;--max-l:#F0FDF4;
+  --joshua:#EA580C;--joshua-l:#FFF7ED;
+  --harriet:#9333EA;--harriet-l:#FAF5FF;
+  --bg:#F0F4F8;--surface:#fff;--border:#E2E8F0;
+  --text:#1E293B;--muted:#64748B;--hdr:#1E293B;
+  --hh:64px; /* hour height */
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;display:flex;flex-direction:column;height:100vh;overflow:hidden}
+
+/* ── HEADER ── */
+header{background:var(--hdr);color:#fff;padding:11px 18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex-shrink:0;box-shadow:0 2px 10px rgba(0,0,0,.3);z-index:100}
+.trip-title{font-size:16px;font-weight:700;flex:1;min-width:130px}
+.week-nav{display:flex;align-items:center;gap:6px}
+.nav-btn{background:rgba(255,255,255,.15);border:none;color:#fff;width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:background .15s}
+.nav-btn:hover{background:rgba(255,255,255,.28)}
+.week-label{font-size:13px;font-weight:600;min-width:168px;text-align:center}
+.today-btn,.edit-btn{background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);color:#fff;padding:5px 13px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600;transition:all .15s}
+.today-btn:hover,.edit-btn:hover:not(.on){background:rgba(255,255,255,.24)}
+.edit-btn.on{background:#22C55E;border-color:#22C55E}
+
+/* ── PERSON FILTERS ── */
+.filters{background:#fff;padding:7px 18px;display:flex;gap:7px;align-items:center;border-bottom:1px solid var(--border);overflow-x:auto;flex-shrink:0}
+.filter-lbl{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap}
+.fpill{border:2px solid var(--border);border-radius:20px;padding:4px 13px;font-size:12px;font-weight:700;cursor:pointer;white-space:nowrap;background:#fff;color:var(--muted);transition:all .15s}
+.fpill.f-all.active{background:var(--hdr);color:#fff;border-color:var(--hdr)}
+.fpill[data-p=andrew].active{background:var(--andrew);color:#fff;border-color:var(--andrew)}
+.fpill[data-p=max].active{background:var(--max);color:#fff;border-color:var(--max)}
+.fpill[data-p=joshua].active{background:var(--joshua);color:#fff;border-color:var(--joshua)}
+.fpill[data-p=harriet].active{background:var(--harriet);color:#fff;border-color:var(--harriet)}
+
+/* ── DESTINATION STRIP ── */
+.dest-strip{display:flex;flex-direction:column;flex-shrink:0;padding:2px 18px 0;background:var(--bg);gap:1px}
+.dest-row{display:flex;height:17px;align-items:stretch}
+.dest-plabel{width:52px;flex-shrink:0;font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;display:flex;align-items:center;padding-right:4px;color:var(--muted)}
+.dest-segs{flex:1;display:flex;gap:1px}
+.dest-seg{flex:1;font-size:8.5px;font-weight:700;color:#fff;display:flex;align-items:center;justify-content:center;padding:0 3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;border-radius:3px;min-width:0;transition:filter .12s}
+.dest-seg.empty{background:transparent!important;color:transparent}
+.dest-seg.editable{cursor:text}
+.dest-seg.editable:hover{filter:brightness(1.15)}
+.dest-seg-inp{font-size:8.5px;font-weight:700;color:#fff;background:transparent;border:none;outline:none;width:100%;text-align:center;min-width:0}
+
+/* ── DAY HEADER ── */
+.tl-head{display:flex;flex-shrink:0;padding:0 18px;border-bottom:2px solid var(--border);background:#fff}
+.th-spacer{width:52px;flex-shrink:0}
+.th-days{flex:1;display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.th-day{padding:7px 4px 5px;text-align:center}
+.th-dow{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.th-num{font-size:20px;font-weight:800;color:var(--text);display:block;margin-top:1px;line-height:1.1}
+.th-day.today .th-dow{color:var(--andrew)}
+.th-day.today .th-num{background:var(--andrew);color:#fff;width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:2px auto 0;font-size:15px}
+
+/* ── SCROLL BODY ── */
+.tl-scroll{flex:1;overflow-y:auto;padding:0 18px 24px;background:var(--bg)}
+.tl-body{display:flex;min-width:720px}
+.tl-labels{width:52px;flex-shrink:0}
+.hour-label{height:var(--hh);display:flex;align-items:flex-start;justify-content:flex-end;padding:4px 8px 0 0;font-size:10px;font-weight:700;color:var(--muted);letter-spacing:.04em}
+.tl-days{flex:1;display:grid;grid-template-columns:repeat(7,1fr);gap:2px;min-width:0}
+.day-col{position:relative;border-left:1px solid var(--border);background:#fff;border-radius:0 0 4px 4px;cursor:default}
+.edit-mode .day-col{cursor:crosshair}
+
+/* Hour lines */
+.hour-line{position:absolute;left:0;right:0;border-top:1px solid var(--border);pointer-events:none}
+.half-line{position:absolute;top:calc(var(--hh)/2);left:6px;right:0;border-top:1px dashed #EBF0F5;pointer-events:none}
+
+/* ── EVENT CARDS ── */
+.ev-card{position:absolute;left:3px;right:3px;border-radius:5px;padding:3px 5px 3px 7px;border-left:3px solid;cursor:pointer;overflow:hidden;z-index:10;transition:box-shadow .12s;min-height:22px}
+.ev-card:hover{box-shadow:0 2px 8px rgba(0,0,0,.15);z-index:20}
+.ev-card.dimmed{opacity:.13}
+.ev-title{font-size:11px;font-weight:700;line-height:1.3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ev-sub{display:flex;align-items:center;gap:3px;margin-top:2px;flex-wrap:nowrap;overflow:hidden}
+.ev-icon{font-size:9px;flex-shrink:0}
+.ev-time{font-size:9px;color:var(--muted);font-weight:600;flex-shrink:0}
+.pdots{display:flex;gap:2px;margin-left:auto;flex-shrink:0}
+.pdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.ptint{position:absolute;top:0;left:3px;right:0;height:3px;border-radius:0 3px 0 0;display:flex;overflow:hidden}
+.ptint-seg{flex:1}
+.clip-icon{font-size:9px;margin-left:2px;flex-shrink:0}
+
+/* ── PERSON NAMES ON CARD (desktop, tall events) ── */
+.ev-persons{position:absolute;left:7px;right:5px;bottom:4px;font-size:9px;font-weight:600;color:var(--text);opacity:.65;pointer-events:none;line-height:1.3;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+
+/* category card colours */
+.cat-flight      {background:#EFF6FF;border-color:#3B82F6}
+.cat-transport   {background:#F0FDF4;border-color:#22C55E}
+.cat-accommodation{background:#FFFBEB;border-color:#F59E0B}
+.cat-meal        {background:#FFF5F5;border-color:#EF4444}
+.cat-activity    {background:#FAF5FF;border-color:#A855F7}
+.cat-other       {background:#F8FAFC;border-color:#94A3B8}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;display:none;align-items:center;justify-content:center;padding:16px}
+.overlay.open{display:flex}
+.modal{background:#fff;border-radius:14px;width:100%;max-width:530px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.22)}
+.modal-hdr{padding:16px 20px 12px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;position:sticky;top:0;background:#fff;z-index:5;border-radius:14px 14px 0 0}
+.modal-title{font-size:15px;font-weight:700;flex:1}
+.modal-close{background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted);line-height:1;padding:0 2px}
+.modal-body{padding:16px 20px}
+.modal-ftr{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:7px;justify-content:flex-end;flex-wrap:wrap;position:sticky;bottom:0;background:#fff;border-radius:0 0 14px 14px}
+
+/* Form */
+.form-row{margin-bottom:13px}
+.form-row label{display:block;font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+.form-row input,.form-row select,.form-row textarea{width:100%;padding:8px 10px;border:1.5px solid var(--border);border-radius:7px;font-size:13px;color:var(--text);background:#fff;transition:border-color .15s;font-family:inherit}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{outline:none;border-color:var(--andrew)}
+.form-row textarea{resize:vertical;min-height:66px}
+.form-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.pchk-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.pchk{border:2px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;background:#fff;color:var(--muted);transition:all .15s;user-select:none}
+.pchk-all-btn{border:2px solid var(--border);border-radius:20px;padding:4px 12px;font-size:12px;font-weight:700;cursor:pointer;background:var(--hdr);color:#fff;border-color:var(--hdr)}
+.pchk-all-btn:hover{background:#334155}
+.pchk[data-p=andrew].on{background:var(--andrew);color:#fff;border-color:var(--andrew)}
+.pchk[data-p=max].on{background:var(--max);color:#fff;border-color:var(--max)}
+.pchk[data-p=joshua].on{background:var(--joshua);color:#fff;border-color:var(--joshua)}
+.pchk[data-p=harriet].on{background:var(--harriet);color:#fff;border-color:var(--harriet)}
+
+/* Attachment */
+.attach-box{border:1.5px dashed var(--border);border-radius:8px;padding:12px}
+.attach-tabs{display:flex;gap:6px;margin-bottom:10px}
+.atab{padding:3px 11px;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:none;color:var(--muted);transition:all .15s}
+.atab.active{background:var(--hdr);color:#fff;border-color:var(--hdr)}
+.apanel{display:none}
+.apanel.active{display:block}
+.file-drop{display:block;padding:14px;background:var(--bg);border:1.5px dashed var(--border);border-radius:7px;text-align:center;cursor:pointer;color:var(--muted);font-size:12px;transition:all .15s}
+.file-drop:hover{border-color:var(--andrew);color:var(--andrew)}
+#fileInput{display:none}
+.fprev{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--bg);border-radius:6px;font-size:12px;margin-top:7px}
+.fprev span{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--text)}
+.fprev button{background:none;border:none;cursor:pointer;color:var(--muted);font-size:15px;line-height:1}
+
+/* Detail view */
+.det-row{display:flex;gap:10px;margin-bottom:11px;align-items:flex-start}
+.det-icon{font-size:17px;flex-shrink:0;margin-top:1px}
+.det-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin-bottom:3px}
+.det-val{font-size:13px;color:var(--text);line-height:1.5}
+.det-val a{color:var(--andrew);text-decoration:none}
+.det-val a:hover{text-decoration:underline}
+.pbadges{display:flex;flex-wrap:wrap;gap:5px}
+.pbadge{padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700;color:#fff}
+.pbadge[data-p=andrew]{background:var(--andrew)}
+.pbadge[data-p=max]{background:var(--max)}
+.pbadge[data-p=joshua]{background:var(--joshua)}
+.pbadge[data-p=harriet]{background:var(--harriet)}
+
+/* Buttons */
+.btn{padding:8px 15px;border-radius:7px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .15s;white-space:nowrap}
+.btn-primary{background:var(--andrew);color:#fff}
+.btn-primary:hover{background:#2563EB}
+.btn-primary:disabled{opacity:.6;cursor:not-allowed}
+.btn-danger{background:#EF4444;color:#fff}
+.btn-danger:hover{background:#DC2626}
+.btn-ghost{background:transparent;color:var(--muted);border:1.5px solid var(--border)}
+.btn-ghost:hover{background:var(--bg)}
+.btn-edit{background:#F59E0B;color:#fff}
+.btn-edit:hover{background:#D97706}
+
+/* Password overlay */
+.pw-box{background:#fff;border-radius:14px;padding:32px;max-width:330px;width:100%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.22)}
+.pw-box h2{font-size:19px;margin-bottom:8px}
+.pw-box p{color:var(--muted);font-size:13px;margin-bottom:20px}
+#pwInput{width:100%;padding:10px 14px;border:2px solid var(--border);border-radius:8px;font-size:16px;text-align:center;letter-spacing:3px;margin-bottom:10px;transition:border-color .15s}
+#pwInput:focus{outline:none;border-color:var(--andrew)}
+.pw-err{color:#EF4444;font-size:12px;margin-bottom:10px;min-height:16px}
+#pwSubmit{width:100%;padding:10px;background:var(--andrew);color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:700;cursor:pointer;transition:background .15s}
+#pwSubmit:hover{background:#2563EB}
+
+/* Spinner */
+.spinner{display:flex;align-items:center;justify-content:center;padding:40px;color:var(--muted);font-size:13px;gap:10px;grid-column:1/-1}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin-icon{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--andrew);border-radius:50%;animation:spin .8s linear infinite;flex-shrink:0}
+
+/* Add hint */
+.add-hint{position:absolute;bottom:4px;right:4px;width:20px;height:20px;border-radius:50%;background:none;border:1.5px dashed #C0CBD8;color:#C0CBD8;font-size:13px;line-height:1;display:none;align-items:center;justify-content:center;pointer-events:none}
+.edit-mode .day-col:hover .add-hint{display:flex}
+
+/* ── DRAG & RESIZE ── */
+.ev-card{cursor:pointer}
+.edit-mode .ev-card{cursor:grab;touch-action:none}
+.ev-card.is-dragging{opacity:.18!important;pointer-events:none}
+.drag-ghost{
+  position:fixed;pointer-events:none;z-index:900;border-radius:5px;
+  padding:3px 5px 3px 7px;border-left:3px solid;overflow:hidden;
+  box-shadow:0 10px 32px rgba(0,0,0,.24);opacity:.9;
+  transform:scale(1.03) rotate(.4deg);transition:none!important;
+}
+.day-col.drop-hi{outline:2px solid var(--andrew);outline-offset:-2px;background:#EBF4FF!important}
+.resize-handle,.resize-handle-top{
+  position:absolute;left:0;right:0;height:9px;
+  cursor:ns-resize;
+  display:flex;align-items:center;justify-content:center;
+  opacity:0;transition:opacity .15s;z-index:15;
+}
+.resize-handle{bottom:0;border-radius:0 0 5px 5px}
+.resize-handle-top{top:0;border-radius:5px 5px 0 0}
+.resize-handle::after,.resize-handle-top::after{content:'';display:block;width:24px;height:2px;border-radius:2px;background:rgba(0,0,0,.28)}
+.ev-card:hover .resize-handle,.ev-card:hover .resize-handle-top{opacity:1}
+.snap-pill{
+  position:fixed;background:#1E293B;color:#fff;
+  font-size:11px;font-weight:800;padding:3px 8px;
+  border-radius:6px;pointer-events:none;z-index:1000;
+  display:none;white-space:nowrap;
+  box-shadow:0 2px 8px rgba(0,0,0,.25);
+}
+
+/* ── SWIPE HINT (mobile) ── */
+.swipe-hint{display:none}
+@media(max-width:767px){
+  .swipe-hint{display:flex;align-items:center;justify-content:center;gap:18px;padding:5px 0 2px;font-size:11px;color:var(--muted);flex-shrink:0}
+  .swipe-hint span{opacity:.55}
+}
+
+/* ── MOBILE ── */
+@media(max-width:767px){
+  header{padding:8px 12px;gap:6px;flex-wrap:nowrap}
+  .trip-title{font-size:12px;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .week-nav{gap:3px}
+  .week-label{font-size:11px;min-width:100px}
+  .nav-btn{width:28px;height:28px;font-size:15px}
+  .today-btn,.edit-btn{padding:5px 8px;font-size:11px}
+
+  .filters{padding:5px 10px;gap:5px}
+  .filter-lbl{display:none}
+  .fpill{padding:5px 10px;font-size:11px}
+
+  .dest-strip{display:none}
+
+  .tl-head{padding:0}
+  .th-spacer{width:40px}
+  .th-days{grid-template-columns:1fr}
+  .th-day{padding:8px 0 6px;text-align:center}
+  .th-num{font-size:26px}
+  .th-dow{font-size:12px;letter-spacing:.08em}
+
+  .tl-scroll{padding:0 4px 40px}
+  .tl-body{min-width:0}
+  .tl-labels{width:40px}
+  .hour-label{font-size:9px;padding:3px 4px 0 0}
+  .tl-days{grid-template-columns:1fr;gap:0}
+  .day-col{border-left:none}
+
+  .ev-card{left:2px;right:2px;padding:4px 5px 4px 7px;min-height:30px}
+  .ev-title{font-size:12px}
+  .ev-time{font-size:10px}
+  .pdot{width:7px;height:7px}
+  .ev-persons{display:none}
+
+  /* Slide-up modal sheet */
+  .overlay{padding:0;align-items:flex-end}
+  .modal{border-radius:20px 20px 0 0;max-width:100%;max-height:88vh}
+  .modal-hdr{padding:14px 16px 10px;border-radius:20px 20px 0 0}
+  .modal-body{padding:12px 16px}
+  .modal-ftr{padding:10px 16px 24px}
+  .modal-ftr .btn{flex:1;text-align:center;padding:11px 10px;font-size:13px}
+
+  .pw-box{border-radius:20px 20px 0 0;padding:28px 20px 36px;max-width:100%}
+
+  /* Prevent iOS zoom on inputs */
+  .form-row input,.form-row select,.form-row textarea{font-size:16px}
+  .form-2col{grid-template-columns:1fr}
+
+  .btn{padding:11px 14px}
+  .pchk{padding:6px 14px;font-size:13px}
+}
+
+/* ── CALENDAR SEARCH ── */
+.cal-search{
+  padding:4px 12px;border:1.5px solid var(--border);border-radius:20px;
+  font-size:12px;outline:none;background:#fff;color:var(--text);
+  width:130px;flex-shrink:0;transition:border-color .15s,width .2s;
+  margin-left:4px;
+}
+.cal-search:focus{border-color:var(--andrew);width:180px}
+.cal-search::-webkit-search-cancel-button{cursor:pointer}
+@media(max-width:767px){
+  .cal-search{width:100px;font-size:12px;margin-left:0}
+  .cal-search:focus{width:130px}
+}
+
+/* ── MOBILE ADD FAB ── */
+#mobileAddBtn{
+  display:none;position:fixed;bottom:24px;right:20px;
+  width:54px;height:54px;border-radius:50%;
+  background:var(--andrew);color:#fff;font-size:30px;font-weight:300;
+  border:none;cursor:pointer;line-height:1;
+  box-shadow:0 4px 18px rgba(0,0,0,.30);
+  z-index:50;align-items:center;justify-content:center;
+  transition:transform .15s,background .15s;
+}
+#mobileAddBtn:hover{transform:scale(1.08);background:#2563EB}
+@media(max-width:767px){
+  body.edit-active #mobileAddBtn{display:flex}
+}
+
+/* ── VIEW TOGGLE ── */
+.view-toggle{display:flex;border-radius:6px;overflow:hidden;border:1px solid rgba(255,255,255,.25);flex-shrink:0}
+.vtog{background:rgba(255,255,255,.13);border:none;color:rgba(255,255,255,.75);padding:5px 11px;font-size:12px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+.vtog.active{background:rgba(255,255,255,.32);color:#fff}
+.vtog:hover:not(.active){background:rgba(255,255,255,.22);color:#fff}
+@media(max-width:767px){.view-toggle{display:none}}
+
+/* ── SYNC INDICATOR ── */
+.sync-dot{
+  width:7px;height:7px;border-radius:50%;background:#22C55E;
+  flex-shrink:0;transition:background .4s;
+}
+.sync-dot.syncing{background:#F59E0B;animation:pulse .8s ease-in-out infinite}
+.sync-dot.error{background:#EF4444}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header>
+  <span class="trip-title">✈️ Family Trip 2026</span>
+  <div class="week-nav">
+    <button class="nav-btn" onclick="navPrev()">‹</button>
+    <span class="week-label" id="weekLabel">Loading…</span>
+    <button class="nav-btn" onclick="navNext()">›</button>
+  </div>
+  <button class="today-btn" onclick="jumpToday()">Today</button>
+  <div class="view-toggle">
+    <button class="vtog active" id="vtog-week" onclick="setViewMode('week')">Week</button>
+    <button class="vtog"        id="vtog-day"  onclick="setViewMode('day')">Day</button>
+  </div>
+  <button class="today-btn" onclick="openPrintModal()">📋 Print</button>
+  <button class="edit-btn" id="editBtn" onclick="toggleEdit()">✏️ Edit</button>
+  <div class="sync-dot" id="syncDot" title="Live sync"></div>
+</header>
+
+<!-- PERSON FILTERS -->
+<div class="filters">
+  <span class="filter-lbl">View:</span>
+  <button class="fpill f-all active" onclick="setFilter('all')">All Together</button>
+  <button class="fpill" data-p="andrew"  data-color="#3B82F6" onclick="setFilter('andrew')">Andrew</button>
+  <button class="fpill" data-p="max"     data-color="#16A34A" onclick="setFilter('max')">Max</button>
+  <button class="fpill" data-p="joshua"  data-color="#EA580C" onclick="setFilter('joshua')">Joshua</button>
+  <button class="fpill" data-p="harriet" data-color="#9333EA" onclick="setFilter('harriet')">Harriet</button>
+  <button class="fpill" data-p="mamgu"   data-color="#EC4899" onclick="setFilter('mamgu')">Mamgu</button>
+  <button class="fpill" data-p="tadcu"   data-color="#06B6D4" onclick="setFilter('tadcu')">Tadcu</button>
+  <button class="fpill" data-p="meg"     data-color="#F59E0B" onclick="setFilter('meg')">Meg</button>
+  <button class="fpill" data-p="patrick" data-color="#14B8A6" onclick="setFilter('patrick')">Patrick</button>
+  <button class="fpill" data-p="granny"  data-color="#BE185D" onclick="setFilter('granny')">Granny</button>
+  <button class="fpill" data-p="granda"  data-color="#64748B" onclick="setFilter('granda')">Granda</button>
+  <button class="fpill" data-p="gangan"  data-color="#DC2626" onclick="setFilter('gangan')">Gan Gan</button>
+  <button class="fpill" data-p="elaine"  data-color="#1D4ED8" onclick="setFilter('elaine')">Elaine &amp; Fam</button>
+  <input type="search" id="calSearch" class="cal-search" placeholder="Search…" oninput="setSearch(this.value)" autocomplete="off">
+</div>
+
+<!-- DESTINATION STRIP (4 per-person rows, rendered by JS) -->
+<div class="dest-strip" id="destStrip"></div>
+
+<!-- MOBILE SWIPE HINT -->
+<div class="swipe-hint" id="swipeHint">
+  <span>‹ swipe to change day ›</span>
+</div>
+
+<!-- DAY HEADERS -->
+<div class="tl-head" id="tlHead">
+  <div class="th-spacer"></div>
+  <div class="th-days" id="thDays"></div>
+</div>
+
+<!-- SCROLLABLE TIMELINE BODY -->
+<div class="tl-scroll" id="tlScroll">
+  <div class="tl-body" id="tlBody">
+    <div class="spinner"><div class="spin-icon"></div> Loading itinerary…</div>
+  </div>
+</div>
+
+<!-- EVENT OVERLAY -->
+<div class="overlay" id="overlay" onclick="closeOverlay(event)">
+  <div class="modal" id="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="modalTitle"></span>
+      <button class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+    <div class="modal-ftr" id="modalFtr"></div>
+  </div>
+</div>
+
+<!-- PRINT MODAL -->
+<div class="overlay" id="printOverlay" onclick="closePrintModal(event)">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-hdr">
+      <span class="modal-title">📋 Print Itinerary</span>
+      <button class="modal-close" onclick="document.getElementById('printOverlay').classList.remove('open')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-row">
+        <label>Date Range</label>
+        <div class="form-2col">
+          <div><label style="font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px">From</label>
+            <input type="date" id="printFrom" value="2026-06-29"></div>
+          <div><label style="font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px">To</label>
+            <input type="date" id="printTo" value="2026-07-27"></div>
+        </div>
+      </div>
+      <div class="form-row">
+        <label>Include People</label>
+        <div class="pchk-wrap" id="printPersons"></div>
+      </div>
+    </div>
+    <div class="modal-ftr">
+      <button class="btn btn-ghost" onclick="document.getElementById('printOverlay').classList.remove('open')">Cancel</button>
+      <button class="btn btn-primary" onclick="generateItinerary()">Generate PDF →</button>
+    </div>
+  </div>
+</div>
+
+<!-- PASSWORD OVERLAY -->
+<div class="overlay" id="pwOverlay">
+  <div class="pw-box">
+    <h2>🔐 Edit Mode</h2>
+    <p>Enter the edit password to add or modify events</p>
+    <input type="password" id="pwInput" placeholder="••••••••" onkeydown="if(event.key==='Enter')checkPw()">
+    <div class="pw-err" id="pwErr"></div>
+    <button id="pwSubmit" onclick="checkPw()">Unlock</button>
+  </div>
+</div>
+
+<script>
+// ─────────────────────────────────────────────────────────────
+// CONFIG
+// ─────────────────────────────────────────────────────────────
+const SB_URL  = 'https://unwmobhkyivodnvvrhgk.supabase.co';
+const SB_KEY  = 'sb_publishable_yq-uPMf6FVMgEejfe3FSlQ_ljvKYjDl';
+const PW_HASH = '7dce034e548b1e319664a6f0d28c30d61f3c5fb9765b76aa8c73bd5e391302fc'; // SHA-256("family2026")
+
+const PERSONS = [
+  {id:'andrew',  name:'Andrew',       color:'#3B82F6', core:true},
+  {id:'max',     name:'Max',          color:'#16A34A', core:true},
+  {id:'joshua',  name:'Joshua',       color:'#EA580C', core:true},
+  {id:'harriet', name:'Harriet',      color:'#9333EA', core:true},
+  {id:'mamgu',   name:'Mamgu',        color:'#EC4899'},
+  {id:'tadcu',   name:'Tadcu',        color:'#06B6D4'},
+  {id:'meg',     name:'Meg',          color:'#F59E0B'},
+  {id:'patrick', name:'Patrick',      color:'#14B8A6'},
+  {id:'granny',  name:'Granny',       color:'#BE185D'},
+  {id:'granda',  name:'Granda',       color:'#64748B'},
+  {id:'gangan',  name:'Gan Gan',      color:'#DC2626'},
+  {id:'elaine',  name:'Elaine & Fam', color:'#1D4ED8'},
+];
+const ALL_IDS  = PERSONS.map(p=>p.id);
+const CORE_IDS = PERSONS.filter(p=>p.core).map(p=>p.id);
+
+const CATS = {
+  flight:        {icon:'✈️',  label:'Flight'},
+  transport:     {icon:'🚗',  label:'Transport'},
+  accommodation: {icon:'🏠',  label:'Stay'},
+  meal:          {icon:'🍽️',  label:'Meal'},
+  activity:      {icon:'🎭',  label:'Activity'},
+  other:         {icon:'📌',  label:'Other'},
+};
+
+const TZ_DEFAULT = 'Europe/London';
+const TZ_OPTIONS = [
+  {id:'Europe/London',       label:'Europe/London (UK)'},
+  {id:'America/Los_Angeles', label:'America/Los_Angeles (LA)'},
+  {id:'America/New_York',    label:'America/New_York (NY)'},
+  {id:'UTC',                 label:'UTC'},
+];
+
+const DAYS   = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const H_START = 6, H_END = 23, HH = 64; // px per hour
+
+// Per-person destination segments (editable in edit mode, saved to Supabase)
+const DEFAULT_PERSON_DESTS = {
+  andrew: [
+    {from:'2026-06-29',to:'2026-06-29',label:'✈ UK Outbound'},
+    {from:'2026-06-30',to:'2026-07-01',label:'TOF'},
+    {from:'2026-07-02',to:'2026-07-05',label:'Brailes'},
+    {from:'2026-07-06',to:'2026-07-09',label:'🏴󠁧󠁢󠁳󠁣󠁴󠁿 Loch Lomond'},
+    {from:'2026-07-10',to:'2026-07-17',label:'🏖️ Salcombe'},
+    {from:'2026-07-18',to:'2026-07-19',label:'🏄 Mumbles'},
+    {from:'2026-07-20',to:'2026-07-27',label:'TOF / London'},
+    {from:'2026-07-28',to:'2026-07-28',label:'✈ LAX'},
+  ],
+  max: [
+    {from:'2026-06-29',to:'2026-06-29',label:'✈ UK Outbound'},
+    {from:'2026-06-30',to:'2026-07-01',label:'TOF'},
+    {from:'2026-07-02',to:'2026-07-05',label:'Brailes'},
+    {from:'2026-07-06',to:'2026-07-09',label:'🏴󠁧󠁢󠁳󠁣󠁴󠁿 Loch Lomond'},
+    {from:'2026-07-10',to:'2026-07-17',label:'🏖️ Salcombe'},
+    {from:'2026-07-18',to:'2026-07-19',label:'🏄 Mumbles'},
+    {from:'2026-07-20',to:'2026-07-27',label:'TOF / London'},
+    {from:'2026-07-28',to:'2026-07-28',label:'✈ LAX'},
+  ],
+  joshua: [
+    {from:'2026-06-29',to:'2026-06-29',label:'✈ UK Outbound'},
+    {from:'2026-06-30',to:'2026-07-04',label:'TOF'},
+    {from:'2026-07-05',to:'2026-07-05',label:'Brailes→GLA'},
+    {from:'2026-07-06',to:'2026-07-09',label:'🏴󠁧󠁢󠁳󠁣󠁴󠁿 Loch Lomond'},
+    {from:'2026-07-10',to:'2026-07-17',label:'🏖️ Salcombe'},
+    {from:'2026-07-18',to:'2026-07-19',label:'🏄 Mumbles'},
+    {from:'2026-07-20',to:'2026-07-27',label:'TOF / London'},
+    {from:'2026-07-28',to:'2026-07-28',label:'✈ LAX'},
+  ],
+  harriet: [
+    {from:'2026-06-29',to:'2026-06-29',label:'✈ UK Outbound'},
+    {from:'2026-06-30',to:'2026-07-04',label:'TOF'},
+    {from:'2026-07-05',to:'2026-07-05',label:'Brailes→GLA'},
+    {from:'2026-07-06',to:'2026-07-09',label:'🏴󠁧󠁢󠁳󠁣󠁴󠁿 Loch Lomond'},
+    {from:'2026-07-10',to:'2026-07-17',label:'🏖️ Salcombe'},
+    {from:'2026-07-18',to:'2026-07-19',label:'🏄 Mumbles'},
+    {from:'2026-07-20',to:'2026-07-27',label:'TOF / London'},
+    {from:'2026-07-28',to:'2026-07-28',label:'✈ LAX'},
+  ],
+};
+let personDests = JSON.parse(JSON.stringify(DEFAULT_PERSON_DESTS)); // deep copy, overwritten by loadDestConfig
+
+// ─────────────────────────────────────────────────────────────
+// STATE
+// ─────────────────────────────────────────────────────────────
+let sb, events=[], filterPerson='all', editMode=false, searchQuery='', viewMode='week';
+let weekStart = mondayOf(new Date());
+let mobileDayIdx = 0; // 0-6, which day of the week is shown on mobile
+
+function isMobile(){ return window.innerWidth < 768; }
+
+// ─────────────────────────────────────────────────────────────
+// BOOT
+// ─────────────────────────────────────────────────────────────
+(async()=>{
+  sb = supabase.createClient(SB_URL, SB_KEY);
+  const tripStart = new Date('2026-06-29');
+  const tripEnd   = new Date('2026-07-28');
+  const today     = new Date();
+  weekStart = (today>=tripStart && today<=tripEnd) ? mondayOf(today) : mondayOf(tripStart);
+
+  // Mobile: start on today's column if in trip range
+  if(isMobile()){
+    const todayIso = fmtDate(today);
+    const days = weekDays(weekStart);
+    const idx = days.findIndex(d=>d.iso===todayIso);
+    mobileDayIdx = idx >= 0 ? idx : 0;
+  }
+
+  await seedIfEmpty();
+  await Promise.all([loadEvents(), loadDestConfig()]);
+  render();
+
+  // Drag-to-move + resize (desktop)
+  initDragHandlers();
+
+  // ── REAL-TIME SYNC ──────────────────────────────────────────
+  const syncDot = document.getElementById('syncDot');
+  sb.channel('events-live')
+    .on('postgres_changes', {event:'*', schema:'public', table:'events'}, async ()=>{
+      if(syncDot){ syncDot.classList.add('syncing'); syncDot.title='Syncing…'; }
+      await Promise.all([loadEvents(), loadDestConfig()]);
+      if(syncDot){ syncDot.classList.remove('syncing'); syncDot.title='Live sync'; }
+      // Don't disrupt an open modal or active drag/resize
+      const overlayOpen = document.getElementById('overlay').classList.contains('open');
+      if(!overlayOpen && !drag && !rsz) render();
+    })
+    .subscribe(status=>{
+      if(syncDot){
+        syncDot.classList.toggle('error', status==='CHANNEL_ERROR');
+        syncDot.title = status==='SUBSCRIBED' ? 'Live sync' : status==='CHANNEL_ERROR' ? 'Sync error' : 'Connecting…';
+      }
+    });
+
+  // Swipe left/right to change day (mobile only)
+  let tx=0, ty=0;
+  document.addEventListener('touchstart', e=>{ tx=e.touches[0].clientX; ty=e.touches[0].clientY; },{passive:true});
+  document.addEventListener('touchend', e=>{
+    if(!isMobile() || document.getElementById('overlay').classList.contains('open')) return;
+    const dx=e.changedTouches[0].clientX-tx, dy=e.changedTouches[0].clientY-ty;
+    if(Math.abs(dx)>Math.abs(dy) && Math.abs(dx)>55){ dx<0 ? navNext() : navPrev(); }
+  },{passive:true});
+
+  // Arrow-key day navigation in desktop day view
+  document.addEventListener('keydown', e=>{
+    const tag = e.target.tagName;
+    if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT') return;
+    if(document.getElementById('overlay').classList.contains('open')) return;
+    if(!isMobile() && viewMode==='day'){
+      if(e.key==='ArrowLeft')  { e.preventDefault(); navPrev(); }
+      if(e.key==='ArrowRight') { e.preventDefault(); navNext(); }
+    }
+  });
+
+  // Re-render on orientation/resize
+  let rto; window.addEventListener('resize', ()=>{ clearTimeout(rto); rto=setTimeout(render, 120); });
+})();
+
+// ─────────────────────────────────────────────────────────────
+// DATA
+// ─────────────────────────────────────────────────────────────
+async function loadEvents(){
+  const wStart = fmtDate(weekStart);
+  const wEnd   = fmtDate(addDays(weekStart, 6));
+  const {data,error} = await sb.from('events').select('*')
+    .not('title','eq','__DEST_CONFIG__')
+    .lte('date', wEnd)
+    .or(`end_date.gte.${wStart},and(end_date.is.null,date.gte.${wStart})`)
+    .order('date').order('start_time');
+  if(error){ console.error(error); return; }
+  events = data||[];
+}
+
+// ── DESTINATION CONFIG ──────────────────────────────────────────
+async function loadDestConfig(){
+  try {
+    const {data} = await sb.from('events').select('notes').eq('title','__DEST_CONFIG__').maybeSingle();
+    if(data?.notes){ personDests = JSON.parse(data.notes); }
+  } catch(e){ /* use defaults */ }
+}
+
+async function saveDestConfig(){
+  const json = JSON.stringify(personDests);
+  const {data:existing} = await sb.from('events').select('id').eq('title','__DEST_CONFIG__').maybeSingle();
+  if(existing){
+    await sb.from('events').update({notes:json}).eq('id',existing.id);
+  } else {
+    await sb.from('events').insert([{title:'__DEST_CONFIG__',date:'2026-06-29',notes:json,is_seeded:false}]);
+  }
+}
+
+// ── DESTINATION STRIP RENDERING ─────────────────────────────────
+function renderDestStrip(days){
+  const strip = document.getElementById('destStrip');
+  strip.innerHTML = PERSONS.filter(p=>p.core).map(person=>{
+    const segs = personDests[person.id]||[];
+    // Group consecutive days with same label into merged segments
+    const groups = [];
+    let i=0;
+    while(i<days.length){
+      const d = days[i];
+      const seg = segs.find(s=> d.iso>=s.from && d.iso<=s.to);
+      const label = seg?seg.label:'';
+      const from  = seg?seg.from:'';
+      const to    = seg?seg.to:'';
+      let j=i+1;
+      while(j<days.length){
+        const d2=days[j];
+        const seg2=segs.find(s=>d2.iso>=s.from && d2.iso<=s.to);
+        if((seg2?seg2.label:'') !== label) break;
+        j++;
+      }
+      groups.push({label,from,to,count:j-i});
+      i=j;
+    }
+    const segsHtml = groups.map((g,gi)=>{
+      const flex = `${g.count} 0 0`;
+      const bg   = g.label?person.color:'transparent';
+      const cls  = `dest-seg${g.label?'':' empty'}${editMode?' editable':''}`;
+      const click= editMode&&g.label?`onclick="destSegClick(this,'${person.id}','${g.from}','${g.to}')"` : '';
+      return `<div class="${cls}" style="flex:${flex};background:${bg}" data-from="${g.from}" data-to="${g.to}" ${click}>${esc(g.label)}</div>`;
+    }).join('');
+    return `<div class="dest-row">
+      <div class="dest-plabel" style="color:${person.color}">${person.name.slice(0,3)}</div>
+      <div class="dest-segs">${segsHtml}</div>
+    </div>`;
+  }).join('');
+}
+
+function destSegClick(el, personId, from, to){
+  if(!editMode) return;
+  const currentLabel = el.textContent;
+  const inp = document.createElement('input');
+  inp.className='dest-seg-inp';
+  inp.value=currentLabel;
+  el.textContent='';
+  el.appendChild(inp);
+  inp.focus(); inp.select();
+  let saved=false;
+  const commit=()=>{
+    if(saved) return; saved=true;
+    const newLabel=inp.value.trim();
+    const segs=personDests[personId];
+    const seg=segs.find(s=>s.from===from && s.to===to);
+    if(seg) seg.label=newLabel;
+    saveDestConfig();
+    renderDestStrip(weekDays(weekStart));
+  };
+  inp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){inp.blur();}
+    if(e.key==='Escape'){saved=true;renderDestStrip(weekDays(weekStart));}
+  });
+  inp.addEventListener('blur',commit);
+}
+
+// ── RECEIPT VIEWER ──────────────────────────────────────────────
+async function openReceipt(url){
+  const win=window.open('','_blank');
+  if(!win){alert('Allow popups for this site to view receipts.'); return;}
+  win.document.write('<html><body style="font-family:sans-serif;padding:20px;color:#555">Loading confirmation…</body></html>');
+  try{
+    const resp=await fetch(url);
+    const html=await resp.text();
+    win.document.open();
+    win.document.write(html);
+    win.document.close();
+  }catch(e){
+    win.document.open();
+    win.document.write(`<html><body style="font-family:sans-serif;padding:32px;color:#333"><h2>Unable to load</h2><p>${e.message}</p><p><a href="${url}" target="_blank">Try opening directly</a></p></body></html>`);
+    win.document.close();
+  }
+}
+
+async function saveEvent(ev){
+  const payload = {...ev};
+  delete payload.id;
+  if(!payload.end_time)  payload.end_time=null;
+  if(!payload.end_date)  payload.end_date=null;
+  if(ev.id){
+    const {error} = await sb.from('events').update(payload).eq('id',ev.id);
+    if(error) throw error;
+  } else {
+    const {error} = await sb.from('events').insert(payload);
+    if(error) throw error;
+  }
+  await loadEvents(); render();
+}
+
+async function deleteEvent(id){
+  const {error} = await sb.from('events').delete().eq('id',id);
+  if(error) throw error;
+  await loadEvents(); render(); closeModal();
+}
+
+async function uploadFile(file){
+  const name = `${Date.now()}_${Math.random().toString(36).slice(2)}.${file.name.split('.').pop()}`;
+  const {error} = await sb.storage.from('attachments').upload(name, file);
+  if(error) throw error;
+  const {data:{publicUrl}} = sb.storage.from('attachments').getPublicUrl(name);
+  return {url:publicUrl, name:file.name};
+}
+
+// ─────────────────────────────────────────────────────────────
+// RENDER
+// ─────────────────────────────────────────────────────────────
+function render(){
+  renderHead();
+  renderBody();
+}
+
+function renderHead(){
+  const days      = weekDays(weekStart);
+  const today     = fmtDate(new Date());
+  const mob       = isMobile();
+  const singleDay = mob || viewMode==='day';
+  const vDays     = singleDay ? [days[mobileDayIdx]] : days;
+
+  document.getElementById('weekLabel').textContent = singleDay
+    ? days[mobileDayIdx].label
+    : `${days[0].label} – ${days[6].label}`;
+
+  const thDays = document.getElementById('thDays');
+  thDays.style.gridTemplateColumns = singleDay ? '1fr' : 'repeat(7,1fr)';
+  thDays.innerHTML = vDays.map(d=>`
+    <div class="th-day ${d.iso===today?'today':''}">
+      <div class="th-dow">${d.dow}</div>
+      <div class="th-num">${d.day}</div>
+    </div>`).join('');
+
+  // Destination strip — desktop only
+  if(!mob) renderDestStrip(singleDay ? [days[mobileDayIdx]] : days);
+  else document.getElementById('destStrip').innerHTML='';
+}
+
+function renderBody(){
+  const days      = weekDays(weekStart);
+  const mob       = isMobile();
+  const singleDay = mob || viewMode==='day';
+  const vDays     = singleDay ? [days[mobileDayIdx]] : days;
+  const numH  = H_END - H_START + 1;
+  const totalH = numH * HH;
+
+  // Hour labels
+  let labelsHtml = '';
+  for(let h=H_START; h<=H_END; h++){
+    const lbl = h===12?'12pm' : h>12?`${h-12}pm` : `${h}am`;
+    labelsHtml += `<div class="hour-label">${lbl}</div>`;
+  }
+
+  // Day columns (all 7 on desktop, 1 on mobile)
+  const colsHtml = vDays.map(d=>{
+    // Include events that start on this day, OR are multi-day and span through it
+    const dayEvs = events.filter(e=>{
+      if(e.end_date && e.end_date !== e.date) return e.date <= d.iso && e.end_date >= d.iso;
+      return e.date === d.iso;
+    });
+
+    // Hour lines
+    let inner = '';
+    for(let i=0; i<numH; i++){
+      inner += `<div class="hour-line" style="top:${i*HH}px"></div>
+                <div class="half-line" style="top:${i*HH + HH/2}px"></div>`;
+    }
+
+    // Add hint (visible on hover in edit mode)
+    inner += `<div class="add-hint">+</div>`;
+
+    // Events
+    dayEvs.forEach(ev=>{ inner += buildCard(ev, d.iso); });
+
+    return `<div class="day-col" style="height:${totalH}px"
+              data-date="${d.iso}"
+              onclick="handleColClick(event,'${d.iso}')">${inner}</div>`;
+  }).join('');
+
+  const body = document.getElementById('tlBody');
+  body.innerHTML = `
+    <div class="tl-labels">${labelsHtml}</div>
+    <div class="tl-days" style="grid-template-columns:${singleDay?'1fr':'repeat(7,1fr)'}">${colsHtml}</div>
+  `;
+
+  // Apply edit mode class
+  const scroll = document.getElementById('tlScroll');
+  scroll.classList.toggle('edit-mode', editMode);
+}
+
+function buildCard(ev, dayIso){
+  const isMultiDay = ev.end_date && ev.end_date !== ev.date;
+  const isStartDay = !isMultiDay || ev.date === dayIso;
+  const isEndDay   = isMultiDay && ev.end_date === dayIso;
+
+  const [sh,sm] = parseTime(ev.start_time||'09:00');
+  let top, height;
+
+  if(isStartDay){
+    top = (sh-H_START)*HH + (sm/60)*HH;
+    if(!isMultiDay){
+      height = HH-4;
+      if(ev.end_time){
+        const [eh,em] = parseTime(ev.end_time);
+        const dur = (eh+em/60) - (sh+sm/60);
+        if(dur>0) height = Math.max(22, dur*HH - 4);
+      }
+    } else {
+      // stretches to bottom of visible grid
+      height = Math.max(22, (H_END - H_START + 1)*HH - top - 4);
+    }
+  } else if(isEndDay){
+    top = 0;
+    if(ev.end_time){
+      const [eh,em] = parseTime(ev.end_time);
+      height = Math.max(22, (eh - H_START + em/60)*HH - 4);
+    } else {
+      height = HH - 4;
+    }
+  } else {
+    // intermediate day — full column height
+    top = 0;
+    height = (H_END - H_START + 1)*HH - 4;
+  }
+
+  const persons = ev.persons||[];
+  const cat     = ev.category||'other';
+  const info    = CATS[cat]||CATS.other;
+  const matchSearch = !searchQuery || [ev.title, ev.location, ev.notes]
+    .some(f => (f||'').toLowerCase().includes(searchQuery));
+  const dimmed  = (filterPerson!=='all' && !persons.includes(filterPerson)) || !matchSearch;
+
+  const tint = persons.map(pid=>{
+    const p = PERSONS.find(x=>x.id===pid);
+    return p ? `<div class="ptint-seg" style="background:${p.color}"></div>` : '';
+  }).join('');
+
+  const dots = persons.map(pid=>{
+    const p = PERSONS.find(x=>x.id===pid);
+    return p ? `<div class="pdot" style="background:${p.color}" title="${p.name}"></div>` : '';
+  }).join('');
+
+  // Person names at bottom — comma-separated, show when card is tall enough (~1 hr+)
+  const personsHtml = height >= 58 && persons.length
+    ? `<div class="ev-persons">${persons.map(pid=>{ const p=PERSONS.find(x=>x.id===pid); return p?p.name:''; }).filter(Boolean).join(', ')}</div>`
+    : '';
+
+  const fmtT = (h,m) => h<12 ? `${h}:${pad(m)}am` : h===12 ? `12:${pad(m)}pm` : `${h-12}:${pad(m)}pm`;
+  const timeStr = fmtT(sh, sm);
+  let endTimeStr = '';
+  if(ev.end_time){ const [eh,em]=parseTime(ev.end_time); endTimeStr=fmtT(eh,em); }
+  const rangeStr = endTimeStr ? `${timeStr}–${endTimeStr}` : timeStr;
+
+  const clip    = ev.attachment_url ? '<span class="clip-icon">📎</span>' : '';
+  const contPfx = !isStartDay ? '<span style="opacity:.6">↪ </span>' : '';
+  const timeLbl = isStartDay ? rangeStr : (isEndDay ? `→ ${endTimeStr||timeStr}` : '↕');
+  const rzHandle = editMode
+    ? `<div class="resize-handle-top" onpointerdown="rszPtrDown(event,'${ev.id}','top')"></div>
+       <div class="resize-handle"     onpointerdown="rszPtrDown(event,'${ev.id}','bottom')"></div>`
+    : '';
+
+  return `
+    <div class="ev-card cat-${cat}${dimmed?' dimmed':''}${isMultiDay?' multi-day':''}"
+         style="top:${top}px;height:${height}px"
+         onpointerdown="cardPtrDown(event,'${ev.id}')"
+         onclick="event.stopPropagation()"
+         title="${esc(ev.title)}">
+      <div class="ptint">${tint}</div>
+      <div class="ev-title">${contPfx}${esc(ev.title)}</div>
+      <div class="ev-sub">
+        <span class="ev-icon">${info.icon}</span>
+        <span class="ev-time" id="evtime-${ev.id}">${timeLbl}</span>
+        <div class="pdots">${dots}</div>
+        ${clip}
+      </div>
+      ${personsHtml}
+      ${rzHandle}
+    </div>`;
+}
+
+// ─────────────────────────────────────────────────────────────
+// EVENT HANDLERS
+// ─────────────────────────────────────────────────────────────
+function handleColClick(e, dateIso){
+  if(!editMode) return;
+  if(dragJustEnded) return; // suppress click fired after a drag completes
+  if(e.target.closest('.ev-card')) return;
+  const rect   = e.currentTarget.getBoundingClientRect();
+  const relY   = e.clientY - rect.top;
+  const hour   = Math.floor(relY/HH) + H_START;
+  openAdd(dateIso, Math.max(H_START, Math.min(H_END, hour)));
+}
+
+function openView(e, id){
+  e.stopPropagation();
+  const ev = events.find(x=>x.id===id);
+  if(!ev) return;
+
+  const info    = CATS[ev.category||'other']||CATS.other;
+  const [sh,sm] = parseTime(ev.start_time||'09:00');
+  const timeStr = sh<12?`${sh}:${pad(sm)} AM`:sh===12?`12:${pad(sm)} PM`:`${sh-12}:${pad(sm)} PM`;
+  const dateStr = (ev.end_date && ev.end_date !== ev.date)
+    ? `${fmtDateHuman(ev.date)} – ${fmtDateHuman(ev.end_date)}`
+    : fmtDateHuman(ev.date);
+  const tzLabel = ev.timezone ? ' ' + tzAbbr(ev.timezone, ev.date) : '';
+
+  const badgesHtml = (ev.persons||[]).map(pid=>{
+    const p=PERSONS.find(x=>x.id===pid);
+    return p?`<span class="pbadge" style="background:${p.color}">${p.name}</span>`:'';
+  }).join('');
+
+  let attachHtml='';
+  if(ev.attachment_url){
+    const aUrl=esc(ev.attachment_url), aName=esc(ev.attachment_name||'View Confirmation');
+    attachHtml=`<div class="det-row">
+      <div class="det-icon">📎</div>
+      <div><div class="det-lbl">Confirmation / Receipt</div>
+      <div class="det-val"><a href="#" onclick="openReceipt('${aUrl}');return false" style="color:var(--andrew);text-decoration:underline;cursor:pointer">${aName}</a></div></div>
+    </div>`;
+  }
+
+  document.getElementById('modalTitle').textContent = ev.title;
+  document.getElementById('modalBody').innerHTML = `
+    <div class="det-row">
+      <div class="det-icon">${info.icon}</div>
+      <div><div class="det-lbl">Category & Time</div>
+      <div class="det-val">${info.label} · ${dateStr} · ${timeStr}<span style="font-size:10px;color:var(--muted);margin-left:4px">${tzLabel}</span></div></div>
+    </div>
+    ${badgesHtml?`<div class="det-row"><div class="det-icon">👥</div><div><div class="det-lbl">Who</div><div class="pbadges">${badgesHtml}</div></div></div>`:''}
+    ${ev.location?`<div class="det-row"><div class="det-icon">📍</div><div><div class="det-lbl">Location</div><div class="det-val">${esc(ev.location)}</div></div></div>`:''}
+    ${ev.notes?`<div class="det-row"><div class="det-icon">📝</div><div><div class="det-lbl">Notes</div><div class="det-val">${esc(ev.notes)}</div></div></div>`:''}
+    ${attachHtml}
+  `;
+
+  document.getElementById('modalFtr').innerHTML = editMode
+    ? `<button class="btn btn-danger" onclick="confirmDelete('${ev.id}')">Delete</button>
+       <button class="btn btn-ghost" onclick="closeModal()">Close</button>
+       <button class="btn btn-edit" onclick="openEdit('${ev.id}')">Edit ✏️</button>`
+    : `<button class="btn btn-ghost" onclick="closeModal()">Close</button>`;
+
+  openOverlay();
+}
+
+function openEdit(id){
+  const ev = events.find(x=>x.id===id);
+  if(ev) renderForm(ev);
+}
+
+function openAdd(dateIso, hour=9){
+  if(!editMode){ showPwPrompt(); return; }
+  renderForm({date:dateIso, start_time:`${pad(hour)}:00`, persons:CORE_IDS, category:'other', timezone:TZ_DEFAULT});
+}
+
+function renderForm(ev){
+  const isNew = !ev.id;
+  document.getElementById('modalTitle').textContent = isNew ? 'Add Event' : 'Edit Event';
+
+  const personBtns = PERSONS.map(p=>{
+    const on = (ev.persons||[]).includes(p.id);
+    const sty = on ? `style="background:${p.color};border-color:${p.color};color:#fff"` : '';
+    return `<div class="pchk ${on?'on':''}" data-p="${p.id}" data-color="${p.color}" ${sty} onclick="togglePchk(this)">${p.name}</div>`;
+  }).join('');
+
+  document.getElementById('modalBody').innerHTML = `
+    <div class="form-row"><label>Title *</label>
+      <input id="f-title" type="text" value="${esc(ev.title||'')}" placeholder="What's happening?" autocomplete="off"></div>
+    <div class="form-2col">
+      <div class="form-row"><label>Date *</label><input id="f-date" type="date" value="${ev.date||''}"></div>
+      <div class="form-row"><label>End Date (if multi-day)</label><input id="f-enddate" type="date" value="${ev.end_date||''}" placeholder="Leave blank for single day"></div>
+    </div>
+    <div class="form-2col">
+      <div class="form-row"><label>Category</label>
+        <select id="f-cat">${Object.entries(CATS).map(([k,v])=>`<option value="${k}"${(ev.category||'other')===k?' selected':''}>${v.icon} ${v.label}</option>`).join('')}</select>
+      </div>
+      <div class="form-row"><label>Timezone</label>
+        <select id="f-tz">${TZ_OPTIONS.map(t=>`<option value="${t.id}"${(ev.timezone||TZ_DEFAULT)===t.id?' selected':''}>${t.label}</option>`).join('')}</select>
+      </div>
+    </div>
+    <div class="form-2col">
+      <div class="form-row"><label>Start Time</label><input id="f-start" type="time" value="${ev.start_time||'09:00'}"></div>
+      <div class="form-row"><label>End Time (optional)</label><input id="f-end" type="time" value="${ev.end_time||''}"></div>
+    </div>
+    <div class="form-row"><label>Who</label>
+      <div class="pchk-wrap">
+        <button class="pchk-all-btn" onclick="selectAllPchk()">All</button>
+        ${personBtns}
+      </div>
+    </div>
+    <div class="form-row"><label>Location</label>
+      <input id="f-loc" type="text" value="${esc(ev.location||'')}" placeholder="Optional"></div>
+    <div class="form-row"><label>Notes</label>
+      <textarea id="f-notes">${esc(ev.notes||'')}</textarea></div>
+    <div class="form-row"><label>Attachment</label>
+      <div class="attach-box">
+        <div class="attach-tabs">
+          <button class="atab active" id="atab-url" onclick="switchATab('url')">🔗 Link</button>
+          <button class="atab" id="atab-file" onclick="switchATab('file')">📁 Upload</button>
+        </div>
+        <div class="apanel active" id="apanel-url">
+          <input id="f-aurl" type="url" placeholder="https://…" value="${esc(ev.attachment_url||'')}" style="margin-bottom:6px">
+          <input id="f-aname" type="text" placeholder="Display label (optional)" value="${esc(ev.attachment_name||'')}">
+        </div>
+        <div class="apanel" id="apanel-file">
+          <label class="file-drop" for="fileInput">📎 Click to choose file (PDF, image, doc…)</label>
+          <input type="file" id="fileInput" onchange="handleFile(this)">
+          <div id="fprev" class="fprev" style="display:none">
+            <span id="fname"></span>
+            <button onclick="clearFile()">×</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('modalFtr').innerHTML = `
+    ${!isNew?`<button class="btn btn-danger" onclick="confirmDelete('${ev.id}')">Delete</button>`:''}
+    <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+    <button class="btn btn-primary" id="saveBtn" onclick="submitForm(${isNew?'null':`'${ev.id}'`})">Save</button>
+  `;
+
+  openOverlay();
+}
+
+async function submitForm(id){
+  const title = document.getElementById('f-title').value.trim();
+  if(!title){ alert('Title is required'); return; }
+  const date = document.getElementById('f-date').value;
+  if(!date){ alert('Date is required'); return; }
+
+  const persons = [...document.querySelectorAll('.pchk.on')].map(el=>el.dataset.p).filter(Boolean);
+  let aUrl = document.getElementById('f-aurl')?.value.trim()||'';
+  let aName= document.getElementById('f-aname')?.value.trim()||'';
+  const fi = document.getElementById('fileInput');
+  if(fi && fi.files[0]){
+    try{
+      const r = await uploadFile(fi.files[0]);
+      aUrl=r.url; aName=r.name;
+    } catch(e){ alert('Upload failed: '+e.message); return; }
+  }
+
+  const rawEndDate = document.getElementById('f-enddate')?.value||'';
+  const ev={title,date,
+    end_date:   rawEndDate && rawEndDate>date ? rawEndDate : null,
+    start_time: document.getElementById('f-start').value||'09:00',
+    end_time:   document.getElementById('f-end').value||null,
+    persons, category: document.getElementById('f-cat').value,
+    location:  document.getElementById('f-loc').value.trim(),
+    notes:     document.getElementById('f-notes').value.trim(),
+    attachment_url:aUrl, attachment_name:aName,
+    timezone: document.getElementById('f-tz')?.value || TZ_DEFAULT,
+  };
+  if(id) ev.id=id;
+
+  const btn=document.getElementById('saveBtn');
+  btn.textContent='Saving…'; btn.disabled=true;
+  try{ await saveEvent(ev); closeModal(); }
+  catch(e){ alert('Error: '+e.message); btn.textContent='Save'; btn.disabled=false; }
+}
+
+async function confirmDelete(id){
+  if(confirm('Delete this event?')) await deleteEvent(id);
+}
+
+// ─────────────────────────────────────────────────────────────
+// DRAG TO MOVE + RESIZE
+// ─────────────────────────────────────────────────────────────
+const SNAP_MINS = 15;
+let drag = null, rsz = null, snapPill = null, dragJustEnded = false;
+
+function initDragHandlers(){
+  snapPill = document.createElement('div');
+  snapPill.className = 'snap-pill';
+  document.body.appendChild(snapPill);
+  document.addEventListener('pointermove', onPtrMove, {passive:false});
+  document.addEventListener('pointerup',     onPtrUp);
+  document.addEventListener('pointercancel', onPtrUp);
+}
+
+// ── CARD POINTER DOWN (tap or drag start) ──────────────────────
+function cardPtrDown(e, evId){
+  // On mobile, pointer events interfere with scroll — skip drag, open view directly
+  if(isMobile()){
+    openView({stopPropagation:()=>{}}, evId);
+    return;
+  }
+  if(!editMode){
+    openView({stopPropagation:()=>{}}, evId);
+    return;
+  }
+  if(e.target.classList.contains('resize-handle') || e.target.classList.contains('resize-handle-top')) return;
+
+  e.preventDefault();
+  const card = e.currentTarget;
+  const rect = card.getBoundingClientRect();
+  const ev   = events.find(x=>x.id===evId);
+  if(!ev) return;
+
+  card.setPointerCapture(e.pointerId);
+
+  // Build ghost but keep hidden until the pointer actually moves
+  const ghost = document.createElement('div');
+  ghost.className = `ev-card cat-${ev.category||'other'} drag-ghost`;
+  ghost.innerHTML = card.innerHTML;
+  ghost.style.width  = rect.width  + 'px';
+  ghost.style.height = rect.height + 'px';
+  ghost.style.left   = rect.left   + 'px';
+  ghost.style.top    = rect.top    + 'px';
+  ghost.style.display = 'none';
+  // Copy border-color from category
+  const computed = getComputedStyle(card);
+  ghost.style.borderColor = computed.borderLeftColor;
+  ghost.style.background  = computed.backgroundColor;
+  document.body.appendChild(ghost);
+
+  drag = {
+    ev, card, ghost,
+    offsetY: e.clientY - rect.top,
+    offsetX: e.clientX - rect.left,
+    startX: e.clientX, startY: e.clientY,
+    moved: false, targetCol: null,
+  };
+}
+
+// ── RESIZE HANDLE POINTER DOWN ─────────────────────────────────
+function rszPtrDown(e, evId, dir){
+  if(!editMode) return;
+  e.preventDefault(); e.stopPropagation();
+  const handle = e.currentTarget;
+  const card   = handle.closest('.ev-card');
+  const ev     = events.find(x=>x.id===evId);
+  if(!ev) return;
+  handle.setPointerCapture(e.pointerId);
+  rsz = {
+    ev, card, dir,
+    startY:    e.clientY,
+    startH:    card.offsetHeight,
+    startTop:  parseFloat(card.style.top) || 0,
+    origEnd:   ev.end_time,
+    origStart: ev.start_time,
+    newEnd:    ev.end_time,
+    newStart:  ev.start_time,
+  };
+  document.body.style.cursor = 'ns-resize';
+}
+
+// ── POINTER MOVE ───────────────────────────────────────────────
+function onPtrMove(e){
+  if(drag){
+    const dx = e.clientX - drag.startX, dy = e.clientY - drag.startY;
+    if(!drag.moved && Math.sqrt(dx*dx+dy*dy) < 7) return;
+
+    // First real move — show ghost and dim card
+    if(!drag.moved){
+      drag.moved = true;
+      drag.ghost.style.display = '';
+      drag.card.classList.add('is-dragging');
+    }
+
+    const gLeft = e.clientX - drag.offsetX;
+    const gTop  = e.clientY - drag.offsetY;
+    drag.ghost.style.left = gLeft + 'px';
+    drag.ghost.style.top  = gTop  + 'px';
+
+    // Find the day column under pointer (hide ghost briefly so elementsFromPoint sees through)
+    drag.ghost.style.visibility = 'hidden';
+    const under = document.elementsFromPoint(e.clientX, e.clientY);
+    drag.ghost.style.visibility = '';
+    const col = under.find(el=>el.classList.contains('day-col')) || null;
+
+    if(col !== drag.targetCol){
+      drag.targetCol?.classList.remove('drop-hi');
+      col?.classList.add('drop-hi');
+      drag.targetCol = col;
+    }
+
+    if(col){
+      const {time} = calcDrop(e.clientY, col);
+      showSnap(fmtTimeLabel(time), e.clientX, e.clientY);
+    } else {
+      hideSnap();
+    }
+    return;
+  }
+
+  if(rsz){
+    e.preventDefault();
+    const dy  = e.clientY - rsz.startY;
+    const liveEl = rsz.card.querySelector('[id^="evtime-"]');
+
+    if(rsz.dir === 'bottom'){
+      // Stretch / shrink from the bottom — changes end time
+      const newH = Math.max(HH/4, rsz.startH + dy);
+      rsz.card.style.height = newH + 'px';
+
+      const [sh,sm]   = parseTime(rsz.ev.start_time||'09:00');
+      const durMins   = Math.max(SNAP_MINS, Math.round((newH/HH*60)/SNAP_MINS)*SNAP_MINS);
+      const endMins   = sh*60+sm + durMins;
+      const eH = Math.min(23, Math.floor(endMins/60)), eM = endMins%60;
+      rsz.newEnd = `${pad(eH)}:${pad(eM)}`;
+
+      if(liveEl) liveEl.textContent = '→ ' + fmtTimeLabel(rsz.newEnd);
+      showSnap('ends ' + fmtTimeLabel(rsz.newEnd), e.clientX, e.clientY);
+
+    } else {
+      // Drag top edge — changes start time, preserves end time / bottom edge
+      const newTop = rsz.startTop + dy;
+      const newH   = Math.max(HH/4, rsz.startH - dy);
+      rsz.card.style.top    = newTop + 'px';
+      rsz.card.style.height = newH   + 'px';
+
+      const rawMins  = Math.round((newTop / HH * 60) / SNAP_MINS) * SNAP_MINS;
+      const absMins  = H_START*60 + rawMins;
+      const sH = Math.max(0, Math.min(23, Math.floor(absMins/60))), sM = absMins%60;
+      rsz.newStart = `${pad(sH)}:${pad(sM)}`;
+
+      if(liveEl) liveEl.textContent = fmtTimeLabel(rsz.newStart);
+      showSnap('starts ' + fmtTimeLabel(rsz.newStart), e.clientX, e.clientY);
+    }
+  }
+}
+
+// ── POINTER UP ─────────────────────────────────────────────────
+async function onPtrUp(e){
+  hideSnap();
+
+  if(drag){
+    drag.targetCol?.classList.remove('drop-hi');
+    drag.ghost.remove();
+    drag.card.classList.remove('is-dragging');
+
+    if(!drag.moved){
+      // Pure tap — open view
+      const evId = drag.ev.id;
+      drag = null;
+      openView({stopPropagation:()=>{}}, evId);
+      return;
+    }
+
+    // *** Set flag SYNCHRONOUSLY before any await ***
+    // The browser fires a click event during the async gap below;
+    // dragJustEnded must already be true when that happens.
+    dragJustEnded = true;
+    setTimeout(() => { dragJustEnded = false; }, 500);
+
+    // Snapshot what we need and clear drag before yielding
+    const col = drag.targetCol;
+    const ev  = drag.ev;
+    drag = null;
+
+    if(col){
+      const {date, time} = calcDrop(e.clientY, col);
+      const [sh,sm]      = parseTime(ev.start_time||'09:00');
+
+      // Preserve duration when moving
+      let newEnd = ev.end_time;
+      if(newEnd && (!ev.end_date || ev.end_date === ev.date)){
+        const [eh,em] = parseTime(newEnd);
+        const dur     = (eh*60+em) - (sh*60+sm);
+        const [nh,nm] = parseTime(time);
+        const endM    = nh*60+nm+dur;
+        newEnd = `${pad(Math.min(23,Math.floor(endM/60)))}:${pad(endM%60)}`;
+      }
+
+      ev.date       = date;
+      ev.start_time = time;
+      if(ev.end_date && ev.end_date !== date) ev.end_date = null;
+      if(newEnd) ev.end_time = newEnd;
+      await saveEventInline(ev);
+    }
+
+    render();
+    return;
+  }
+
+  if(rsz){
+    document.body.style.cursor = '';
+    if(rsz.dir === 'bottom'){
+      rsz.ev.end_time   = rsz.newEnd   || rsz.origEnd;
+    } else {
+      rsz.ev.start_time = rsz.newStart || rsz.origStart;
+    }
+    rsz.card.style.height = '';
+    rsz.card.style.top    = '';
+    await saveEventInline(rsz.ev);
+    rsz = null;
+    render();
+  }
+}
+
+// ── HELPERS ────────────────────────────────────────────────────
+function calcDrop(clientY, col){
+  const rect     = col.getBoundingClientRect();
+  const relY     = Math.max(0, Math.min(col.offsetHeight-1, clientY - rect.top));
+  const rawMins  = Math.round((relY / HH * 60) / SNAP_MINS) * SNAP_MINS;
+  const absMins  = H_START*60 + rawMins;
+  const h = Math.max(0, Math.min(23, Math.floor(absMins/60))), m = absMins%60;
+  return { date: col.dataset.date, time: `${pad(h)}:${pad(m)}` };
+}
+
+function fmtTimeLabel(t){
+  const [h,m] = parseTime(t);
+  return h<12?`${h}:${pad(m)}am`:h===12?`12:${pad(m)}pm`:`${h-12}:${pad(m)}pm`;
+}
+
+function showSnap(label, x, y){
+  if(!snapPill) return;
+  snapPill.textContent  = label;
+  snapPill.style.left   = (x+14)+'px';
+  snapPill.style.top    = (y-22)+'px';
+  snapPill.style.display = 'block';
+}
+function hideSnap(){ if(snapPill) snapPill.style.display='none'; }
+
+async function saveEventInline(ev){
+  const payload = {...ev};
+  delete payload.id;
+  if(!payload.end_time) payload.end_time = null;
+  if(!payload.end_date) payload.end_date = null;
+  const {error} = await sb.from('events').update(payload).eq('id', ev.id);
+  if(!error){
+    const idx = events.findIndex(e=>e.id===ev.id);
+    if(idx>=0) events[idx] = {...ev};
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// FORM HELPERS
+// ─────────────────────────────────────────────────────────────
+function togglePchk(el){
+  const on = el.classList.toggle('on');
+  const c  = el.dataset.color;
+  if(c){ el.style.background=on?c:''; el.style.borderColor=on?c:''; el.style.color=on?'#fff':''; }
+}
+function selectAllPchk(){
+  document.querySelectorAll('.pchk[data-p]').forEach(el=>{
+    el.classList.add('on');
+    const c=el.dataset.color;
+    if(c){el.style.background=c;el.style.borderColor=c;el.style.color='#fff';}
+  });
+}
+function switchATab(t){
+  document.querySelectorAll('.atab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.apanel').forEach(p=>p.classList.remove('active'));
+  document.getElementById(`atab-${t}`).classList.add('active');
+  document.getElementById(`apanel-${t}`).classList.add('active');
+}
+function handleFile(inp){
+  if(!inp.files[0]) return;
+  document.getElementById('fname').textContent = inp.files[0].name;
+  document.getElementById('fprev').style.display='flex';
+}
+function clearFile(){
+  document.getElementById('fileInput').value='';
+  document.getElementById('fprev').style.display='none';
+}
+
+// ─────────────────────────────────────────────────────────────
+// NAVIGATION & FILTERS
+// ─────────────────────────────────────────────────────────────
+function setFilter(p){
+  filterPerson=p;
+  document.querySelectorAll('.fpill').forEach(el=>{
+    const isActive = (p==='all' && el.classList.contains('f-all')) || el.dataset.p===p;
+    el.classList.toggle('active', isActive);
+    const c = el.dataset.color;
+    if(c){
+      el.style.background  = isActive ? c : '';
+      el.style.borderColor = isActive ? c : '';
+      el.style.color       = isActive ? '#fff' : '';
+    }
+  });
+  renderBody();
+}
+
+function setSearch(q){
+  searchQuery = q.toLowerCase().trim();
+  renderBody();
+}
+
+function mobileAdd(){
+  const dayIso = weekDays(weekStart)[mobileDayIdx].iso;
+  openAdd(dayIso, 9);
+}
+
+function shiftWeek(d){ weekStart=addDays(weekStart,d*7); loadEvents().then(render); }
+
+function navPrev(){
+  if(isMobile() || viewMode==='day'){
+    mobileDayIdx--;
+    if(mobileDayIdx<0){ mobileDayIdx=6; weekStart=addDays(weekStart,-7); loadEvents().then(render); return; }
+    render();
+  } else { shiftWeek(-1); }
+}
+function navNext(){
+  if(isMobile() || viewMode==='day'){
+    mobileDayIdx++;
+    if(mobileDayIdx>6){ mobileDayIdx=0; weekStart=addDays(weekStart,7); loadEvents().then(render); return; }
+    render();
+  } else { shiftWeek(1); }
+}
+
+function jumpToday(){
+  weekStart=mondayOf(new Date());
+  if(isMobile() || viewMode==='day'){
+    const todayIso=fmtDate(new Date());
+    const days=weekDays(weekStart);
+    const idx=days.findIndex(d=>d.iso===todayIso);
+    mobileDayIdx=idx>=0?idx:0;
+  }
+  loadEvents().then(render);
+}
+
+function setViewMode(mode){
+  viewMode=mode;
+  document.getElementById('vtog-week').classList.toggle('active', mode==='week');
+  document.getElementById('vtog-day').classList.toggle('active',  mode==='day');
+  if(mode==='day'){
+    // Land on today if visible in current week, otherwise Monday
+    const todayIso=fmtDate(new Date());
+    const days=weekDays(weekStart);
+    const idx=days.findIndex(d=>d.iso===todayIso);
+    mobileDayIdx=idx>=0?idx:0;
+  }
+  render();
+}
+
+function toggleEdit(){
+  if(editMode){ editMode=false; updateEditUI(); }
+  else showPwPrompt();
+}
+
+function updateEditUI(){
+  const btn=document.getElementById('editBtn');
+  btn.classList.toggle('on',editMode);
+  btn.textContent = editMode ? '🔓 Editing' : '✏️ Edit';
+  document.body.classList.toggle('edit-active', editMode);
+  if(!isMobile()){
+    const days=weekDays(weekStart);
+    renderDestStrip(viewMode==='day'?[days[mobileDayIdx]]:days);
+  }
+  renderBody();
+}
+
+// ─────────────────────────────────────────────────────────────
+// OVERLAYS
+// ─────────────────────────────────────────────────────────────
+function openOverlay(){ document.getElementById('overlay').classList.add('open'); }
+function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+function closeOverlay(e){ if(e.target===document.getElementById('overlay')) closeModal(); }
+
+function showPwPrompt(){
+  document.getElementById('pwInput').value='';
+  document.getElementById('pwErr').textContent='';
+  document.getElementById('pwOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('pwInput').focus(),100);
+}
+
+async function checkPw(){
+  const hash = await sha256(document.getElementById('pwInput').value);
+  if(hash===PW_HASH){
+    document.getElementById('pwOverlay').classList.remove('open');
+    editMode=true; updateEditUI();
+  } else {
+    document.getElementById('pwErr').textContent='Incorrect password';
+    document.getElementById('pwInput').select();
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// UTILS
+// ─────────────────────────────────────────────────────────────
+async function sha256(msg){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(msg));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function parseTime(t){ const [h,m]=(t||'09:00').split(':').map(Number); return [h,m||0]; }
+function tzAbbr(timezone, dateIso){
+  if(!timezone) return '';
+  try {
+    return new Intl.DateTimeFormat('en-GB',{timeZone:timezone,timeZoneName:'short'})
+      .formatToParts(new Date((dateIso||'2026-07-01')+'T12:00:00Z'))
+      .find(p=>p.type==='timeZoneName')?.value||'';
+  } catch(e){ return ''; }
+}
+function pad(n){ return String(n).padStart(2,'0'); }
+function mondayOf(d){ const dt=new Date(d); const day=dt.getDay(); dt.setDate(dt.getDate()+(day===0?-6:1-day)); dt.setHours(0,0,0,0); return dt; }
+function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
+function fmtDate(d){ return d.toISOString().slice(0,10); }
+function fmtDateHuman(iso){ const d=new Date(iso+'T12:00:00'); return `${DAYS[(d.getDay()+6)%7]} ${d.getDate()} ${MONTHS[d.getMonth()]}`; }
+function weekDays(start){
+  return Array.from({length:7},(_,i)=>{
+    const d=addDays(start,i);
+    return {iso:fmtDate(d),dow:DAYS[i],day:d.getDate(),label:`${DAYS[i]} ${d.getDate()} ${MONTHS[d.getMonth()]}`};
+  });
+}
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+// ─────────────────────────────────────────────────────────────
+// SEED DATA (runs once if table is empty)
+// ─────────────────────────────────────────────────────────────
+const ALL = ['andrew','max','joshua','harriet'];
+const SEED = [
+  // ── WEEK 1: June 29 – July 5 ─────────────────────────────
+  {title:'Flight to LHR',                        date:'2026-06-29',start_time:'18:00',end_time:'23:00',persons:ALL,           category:'flight',        location:'LHR',            notes:'6pm departure'},
+  {title:'Meg arrives',                           date:'2026-06-29',start_time:'21:00',              persons:ALL,           category:'other',         location:'TOF'},
+  {title:'Land LHR (car from The Out)',           date:'2026-06-30',start_time:'12:30',              persons:ALL,           category:'transport',     location:'LHR',            notes:'Car arranged: The Out'},
+  {title:'Settle in at TOF',                      date:'2026-06-30',start_time:'15:00',              persons:ALL,           category:'accommodation', location:'TOF'},
+  {title:'Salad, quiche & steaks',                date:'2026-06-30',start_time:'19:00',              persons:ALL,           category:'meal',          location:'TOF'},
+  {title:'Meg to Bristol Airport',                date:'2026-07-01',start_time:'09:00',              persons:ALL,           category:'transport',     location:'Bristol Airport'},
+  {title:'Duke for lunch / Mamgu collects art',   date:'2026-07-01',start_time:'12:00',              persons:ALL,           category:'meal',          location:''},
+  {title:'BBQ – Steaks & burgers',                date:'2026-07-01',start_time:'19:00',              persons:ALL,           category:'meal',          location:'TOF'},
+  {title:'Settle in at TOF',                      date:'2026-07-02',start_time:'09:00',              persons:ALL,           category:'accommodation', location:'TOF'},
+  {title:'Becki arrives / Max & Andrew to Brailes',date:'2026-07-02',start_time:'14:00',             persons:['max','andrew'],category:'transport',   location:'Brailes'},
+  {title:'Fried Chicken & Salad',                 date:'2026-07-02',start_time:'19:00',              persons:['joshua','harriet'],category:'meal',      location:'TOF'},
+  {title:'Max & Andrew away – Brailes',           date:'2026-07-03',start_time:'09:00',end_time:'20:00',persons:['max','andrew'],category:'activity', location:'Brailes'},
+  {title:'Cotswolds Distillery Tour',             date:'2026-07-03',start_time:'12:00',end_time:'14:00',persons:['andrew','max','joshua','harriet'],category:'activity',location:'Cotswolds Distillery, Bourton-on-the-Hill',notes:'9 people total. Bookings #35955 (Andrew/Charles) & #36166 (Maxwell). Tour & Tasting — 12pm slot requested.'},
+  {title:'Becki – Train trip & camping (Tadcu)',  date:'2026-07-03',start_time:'10:00',              persons:['joshua','harriet'],category:'activity',  location:''},
+  {title:'Fish fingers, chips & peas',            date:'2026-07-03',start_time:'18:30',              persons:['joshua','harriet'],category:'meal',      location:'TOF'},
+  {title:'Max & Andrew away – Brailes',           date:'2026-07-04',start_time:'09:00',end_time:'20:00',persons:['max','andrew'],category:'activity', location:'Brailes'},
+  {title:'Becki – indoor/outdoor play',           date:'2026-07-04',start_time:'10:00',              persons:['joshua','harriet'],category:'activity',  location:''},
+  {title:"Mac 'n' Cheese",                        date:'2026-07-04',start_time:'18:30',              persons:['joshua','harriet'],category:'meal',      location:'TOF'},
+  {title:'Joshua & Harriet meet Max & Andrew in Brailes',date:'2026-07-05',start_time:'10:00',persons:ALL,category:'activity',location:'Brailes'},
+  {title:'LHR → GLA 13:20 (Enterprise car)',      date:'2026-07-05',start_time:'13:20',end_time:'15:00',persons:ALL,        category:'flight',        location:'LHR → Glasgow',  notes:'Car from Enterprise'},
+
+  // ── WEEK 2: July 6 – July 12 ─────────────────────────────
+  {title:'Loch Lomond',                           date:'2026-07-06',start_time:'09:00',              persons:ALL,           category:'accommodation', location:'Loch Lomond'},
+  {title:'Naming Day Lunch @ Duck Bay (12pm)',    date:'2026-07-06',start_time:'12:00',end_time:'14:30',persons:ALL,        category:'meal',          location:'Duck Bay, Loch Lomond'},
+  {title:'Loch Lomond',                           date:'2026-07-07',start_time:'09:00',              persons:ALL,           category:'accommodation', location:'Loch Lomond'},
+  {title:'Lunch at Elaine & Martin',              date:'2026-07-07',start_time:'13:00',              persons:ALL,           category:'meal',          location:''},
+  {title:'Loch Lomond',                           date:'2026-07-08',start_time:'09:00',              persons:ALL,           category:'accommodation', location:'Loch Lomond'},
+  {title:'Safari',                                date:'2026-07-08',start_time:'14:00',              persons:ALL,           category:'activity',      location:''},
+  {title:'Loch Lomond',                           date:'2026-07-09',start_time:'09:00',              persons:ALL,           category:'accommodation', location:'Loch Lomond'},
+  {title:'EDI → EXT 11:00 (The National car)',    date:'2026-07-10',start_time:'11:00',end_time:'13:30',persons:ALL,        category:'flight',        location:'Edinburgh Airport', notes:'Car from The National'},
+  {title:'Arrive Salcombe / Nanny greet (5–8pm)',date:'2026-07-10',start_time:'17:00',end_time:'20:00',persons:ALL,         category:'accommodation', location:'Salcombe'},
+  {title:'Eat in (Fish & Chips!)',                date:'2026-07-10',start_time:'19:00',              persons:ALL,           category:'meal',          location:'Salcombe'},
+  {title:'Coffee in town',                        date:'2026-07-11',start_time:'10:00',              persons:ALL,           category:'activity',      location:'Salcombe'},
+  {title:'Picnic on the beach',                   date:'2026-07-11',start_time:'13:00',              persons:ALL,           category:'meal',          location:'Salcombe Beach'},
+  {title:'Victoria Inn @ 7:30pm (Nanny 6–9)',     date:'2026-07-11',start_time:'19:30',end_time:'21:00',persons:ALL,        category:'meal',          location:'Victoria Inn, Salcombe'},
+  {title:'Visit to beach',                        date:'2026-07-12',start_time:'10:00',              persons:ALL,           category:'activity',      location:'Salcombe Beach'},
+  {title:'Naming Day – Thirty Three (12:30pm)',   date:'2026-07-12',start_time:'12:30',end_time:'14:30',persons:ALL,        category:'meal',          location:'Thirty Three, Salcombe'},
+  {title:'Eat in (Mum & Ian)',                    date:'2026-07-12',start_time:'19:00',              persons:ALL,           category:'meal',          location:'Salcombe'},
+
+  // ── WEEK 3: July 13 – July 19 ─────────────────────────────
+  {title:'Spa?',                                  date:'2026-07-13',start_time:'10:00',              persons:ALL,           category:'activity',      location:'Salcombe'},
+  {title:'Lunch at Spa (Nanny 11–4)',             date:'2026-07-13',start_time:'11:00',end_time:'14:00',persons:ALL,        category:'meal',          location:'Spa, Salcombe'},
+  {title:"Dinner in (Meg & Pat) + drinks at The Ferry", date:'2026-07-13',start_time:'19:00',persons:ALL, category:'meal', location:'The Ferry, Salcombe'},
+  {title:'Granny leaves',                         date:'2026-07-14',start_time:'09:00',              persons:ALL,           category:'other',         location:'Salcombe'},
+  {title:'Gara Rock (Nanny 11–4)',                date:'2026-07-14',start_time:'11:00',end_time:'16:00',persons:ALL,        category:'activity',      location:'Gara Rock Hotel'},
+  {title:'Eat out – Pizza/burger (Nanny 6–9)',    date:'2026-07-14',start_time:'18:00',end_time:'21:00',persons:ALL,        category:'meal',          location:'Salcombe'},
+  {title:'Distillery Tour 12pm (Nanny 11–4)',     date:'2026-07-15',start_time:'12:00',end_time:'14:00',persons:ALL,        category:'activity',      location:'Salcombe Gin Distillery'},
+  {title:'Crab Shed @ 7:30pm (Nanny 6–9)',        date:'2026-07-15',start_time:'19:30',end_time:'21:00',persons:ALL,        category:'meal',          location:'Crab Shed, Salcombe'},
+  {title:'Walk up hill with picnic',              date:'2026-07-16',start_time:'10:00',              persons:ALL,           category:'activity',      location:'Salcombe'},
+  {title:'Winking Prawn @ 5:45pm',               date:'2026-07-16',start_time:'17:45',end_time:'19:30',persons:ALL,        category:'meal',          location:'Winking Prawn, Salcombe'},
+  {title:'Last morning in Salcombe',              date:'2026-07-17',start_time:'09:00',              persons:ALL,           category:'accommodation', location:'Salcombe'},
+  {title:'Drive to Mumbles (via Leonie)',         date:'2026-07-17',start_time:'14:00',end_time:'19:00',persons:ALL,        category:'transport',     location:'Salcombe → Mumbles'},
+  {title:'Mumbles',                               date:'2026-07-18',start_time:'09:00',              persons:ALL,           category:'accommodation', location:'Mumbles'},
+  {title:'Beach',                                 date:'2026-07-18',start_time:'12:00',              persons:ALL,           category:'activity',      location:'Mumbles Beach'},
+  {title:'Tadcu & Josh camping',                  date:'2026-07-18',start_time:'18:00',              persons:['joshua'],    category:'activity',      location:''},
+  {title:'Mumbles',                               date:'2026-07-19',start_time:'09:00',              persons:ALL,           category:'accommodation', location:'Mumbles'},
+  {title:'Beach',                                 date:'2026-07-19',start_time:'12:00',              persons:ALL,           category:'activity',      location:'Mumbles Beach'},
+  {title:'Engagement party',                      date:'2026-07-19',start_time:'19:00',              persons:ALL,           category:'activity',      location:''},
+
+  // ── WEEK 4: July 20 – July 26 ─────────────────────────────
+  {title:'Drive to TOF',                          date:'2026-07-20',start_time:'09:00',end_time:'13:00',persons:ALL,        category:'transport',     location:'Mumbles → TOF'},
+  {title:'Welland Park',                          date:'2026-07-20',start_time:'14:00',              persons:ALL,           category:'activity',      location:'Welland Park'},
+  {title:'Brunch at Adams Farm',                  date:'2026-07-21',start_time:'10:00',end_time:'12:00',persons:ALL,        category:'meal',          location:'Adams Farm'},
+  {title:'Visit Gran / Hev?',                     date:'2026-07-21',start_time:'14:00',              persons:ALL,           category:'activity',      location:''},
+  {title:'BBQ',                                   date:'2026-07-21',start_time:'19:00',              persons:ALL,           category:'meal',          location:'TOF'},
+  {title:'Max & Josh to London',                  date:'2026-07-22',start_time:'09:00',end_time:'12:00',persons:['max','joshua'],category:'transport', location:'TOF → London'},
+  {title:'Lion King @ 2:30pm',                   date:'2026-07-22',start_time:'14:30',end_time:'17:30',persons:['max','joshua'],category:'activity',  location:'London West End'},
+  {title:'Night in London',                       date:'2026-07-22',start_time:'20:00',              persons:['max','joshua'],category:'accommodation',location:'London'},
+  {title:'London sightseeing',                    date:'2026-07-23',start_time:'10:00',              persons:['max','joshua'],category:'activity',     location:'London'},
+  {title:'Matilda @ 2pm',                         date:'2026-07-23',start_time:'14:00',end_time:'17:00',persons:['max','joshua'],category:'activity', location:'London West End'},
+  {title:'Back to TOF',                           date:'2026-07-23',start_time:'19:00',              persons:['max','joshua'],category:'transport',    location:'London → TOF'},
+  {title:'TOF Park',                              date:'2026-07-24',start_time:'10:00',              persons:ALL,           category:'activity',      location:'TOF'},
+  {title:'Lido Swimming?',                        date:'2026-07-24',start_time:'14:00',              persons:ALL,           category:'activity',      location:''},
+  {title:'Fish and chips',                        date:'2026-07-24',start_time:'18:30',              persons:ALL,           category:'meal',          location:''},
+  {title:'TOF Park',                              date:'2026-07-25',start_time:'10:00',              persons:ALL,           category:'activity',      location:'TOF'},
+  {title:'Welland Steam Rally',                   date:'2026-07-25',start_time:'13:00',end_time:'17:00',persons:ALL,        category:'activity',      location:'Welland Steam Rally'},
+  {title:'BBQ',                                   date:'2026-07-25',start_time:'19:00',              persons:ALL,           category:'meal',          location:'TOF'},
+  {title:'Leonie & co + Gran',                    date:'2026-07-26',start_time:'14:00',              persons:ALL,           category:'activity',      location:'TOF'},
+
+  // ── WEEK 5: July 27 – July 28 ─────────────────────────────
+  {title:'TOF – Packing',                         date:'2026-07-27',start_time:'09:00',              persons:ALL,           category:'other',         location:'TOF'},
+  {title:'Visit Gran',                            date:'2026-07-27',start_time:'13:00',              persons:ALL,           category:'activity',      location:''},
+  {title:'Sausages & Mash',                       date:'2026-07-27',start_time:'19:00',              persons:ALL,           category:'meal',          location:'TOF'},
+  {title:'LHR → LAX 10:30am',                    date:'2026-07-28',start_time:'10:30',end_time:'23:59',persons:ALL,         category:'flight',        location:'LHR → LAX',      notes:'10:30am departure'},
+];
+
+async function seedIfEmpty(){
+  const {count,error} = await sb.from('events').select('*',{count:'exact',head:true}).eq('is_seeded',true);
+  if(error){ console.warn('Seed check error:',error); return; }
+  if(count > 0) return;
+  const rows = SEED.map(e=>({...e, is_seeded:true}));
+  for(let i=0; i<rows.length; i+=20){
+    const {error:err} = await sb.from('events').insert(rows.slice(i,i+20));
+    if(err) console.error('Seed insert error:',err);
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// PRINT ITINERARY
+// ─────────────────────────────────────────────────────────────
+function openPrintModal(){
+  const wrap = document.getElementById('printPersons');
+  wrap.innerHTML = PERSONS.map(p=>{
+    const sty = `background:${p.color};border-color:${p.color};color:#fff`;
+    return `<div class="pchk on" data-p="${p.id}" data-color="${p.color}" style="${sty}" onclick="togglePchk(this)">${p.name}</div>`;
+  }).join('');
+  document.getElementById('printOverlay').classList.add('open');
+}
+
+function closePrintModal(e){
+  if(e && e.target !== e.currentTarget) return;
+  document.getElementById('printOverlay').classList.remove('open');
+}
+
+async function generateItinerary(){
+  const fromDate = document.getElementById('printFrom').value;
+  const toDate   = document.getElementById('printTo').value;
+  if(!fromDate || !toDate){ alert('Please select a date range'); return; }
+
+  const selIds = [...document.querySelectorAll('#printPersons .pchk.on')].map(el=>el.dataset.p);
+  if(!selIds.length){ alert('Please select at least one person'); return; }
+  const selPersons = PERSONS.filter(p=>selIds.includes(p.id));
+
+  const btn = document.querySelector('#printOverlay .btn-primary');
+  btn.textContent = 'Loading…'; btn.disabled = true;
+
+  const {data,error} = await sb.from('events').select('*')
+    .not('title','eq','__DEST_CONFIG__')
+    .gte('date', fromDate).lte('date', toDate)
+    .order('date').order('start_time');
+
+  btn.textContent = 'Generate PDF →'; btn.disabled = false;
+  if(error){ alert('Failed to load events: '+error.message); return; }
+
+  const evs = (data||[]).filter(ev=>(ev.persons||[]).some(p=>selIds.includes(p)));
+
+  const byDate = {};
+  evs.forEach(ev=>{ if(!byDate[ev.date]) byDate[ev.date]=[]; byDate[ev.date].push(ev); });
+
+  const html = buildItineraryHtml(byDate, selPersons, fromDate, toDate);
+  const w = window.open('','_blank');
+  w.document.write(html);
+  w.document.close();
+  setTimeout(()=>w.print(), 700);
+  document.getElementById('printOverlay').classList.remove('open');
+}
+
+function buildItineraryHtml(byDate, selPersons, fromDate, toDate){
+  const CI = {
+    flight:        {icon:'✈️', color:'#3B82F6', bg:'#EFF6FF', label:'Flight'},
+    transport:     {icon:'🚗', color:'#16A34A', bg:'#F0FDF4', label:'Transport'},
+    accommodation: {icon:'🏠', color:'#D97706', bg:'#FFFBEB', label:'Stay'},
+    meal:          {icon:'🍽️', color:'#DC2626', bg:'#FFF5F5', label:'Meal'},
+    activity:      {icon:'🎭', color:'#9333EA', bg:'#FAF5FF', label:'Activity'},
+    other:         {icon:'📌', color:'#64748B', bg:'#F8FAFC', label:'Other'},
+  };
+
+  const WDAYS = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const MONS  = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+
+  const fmtISO = iso => { const d=new Date(iso+'T12:00:00'); return {dow:WDAYS[d.getDay()], day:d.getDate(), mon:MONS[d.getMonth()], yr:d.getFullYear()}; };
+  const fmtT   = t => { if(!t) return ''; const [h,m]=t.split(':').map(Number); const ap=h<12?'am':'pm'; return `${h===0?12:h>12?h-12:h}:${String(m).padStart(2,'0')}${ap}`; };
+  const esc2   = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  const fl = fmtISO(fromDate), tl = fmtISO(toDate);
+  const coverDate = fromDate===toDate
+    ? `${fl.dow}, ${fl.day} ${fl.mon} ${fl.yr}`
+    : `${fl.day} ${fl.mon} – ${tl.day} ${tl.mon} ${tl.yr}`;
+
+  const coverBadges = selPersons.map(p=>`<span class="cbadge" style="background:${p.color}">${p.name}</span>`).join('');
+
+  const daysHtml = Object.keys(byDate).sort().map(iso=>{
+    const {dow,day,mon,yr} = fmtISO(iso);
+    const evHtml = byDate[iso].map(ev=>{
+      const ci   = CI[ev.category||'other']||CI.other;
+      const st   = fmtT(ev.start_time);
+      const et   = fmtT(ev.end_time);
+      const multiTag = (ev.end_date && ev.end_date!==ev.date)
+        ? `<div class="ev-multi">Until ${(()=>{ const x=fmtISO(ev.end_date); return `${x.day} ${x.mon}`; })()}</div>` : '';
+      const loc  = ev.location ? `<div class="ev-loc">📍 ${esc2(ev.location)}</div>` : '';
+      const notes= ev.notes    ? `<div class="ev-notes">${esc2(ev.notes)}</div>` : '';
+      const who  = (ev.persons||[]).map(pid=>{ const p=PERSONS.find(x=>x.id===pid); return p?`<span class="ebadge" style="background:${p.color}">${p.name}</span>`:''; }).filter(Boolean).join('');
+      return `
+        <div class="ev-row" style="border-left:4px solid ${ci.color};background:${ci.bg}">
+          <div class="ev-tc">
+            <span class="ev-st">${st||'—'}</span>
+            ${et?`<span class="ev-et">→ ${et}</span>`:''}
+          </div>
+          <div class="ev-body">
+            <div class="ev-head"><span class="ev-ico">${ci.icon}</span><span class="ev-ttl">${esc2(ev.title)}</span></div>
+            ${multiTag}${loc}${notes}
+            ${who?`<div class="ev-who">${who}</div>`:''}
+          </div>
+        </div>`;
+    }).join('');
+    return `
+      <div class="day-sec">
+        <div class="day-hdr">
+          <span class="day-dow">${dow.slice(0,3).toUpperCase()}</span>
+          <span class="day-date">${day} ${mon} ${yr}</span>
+        </div>
+        ${evHtml}
+      </div>`;
+  }).join('');
+
+  const genDate = new Date().toLocaleDateString('en-GB',{day:'numeric',month:'long',year:'numeric'});
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Family Trip 2026 — Itinerary</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+@page{margin:14mm 14mm 14mm 14mm;size:A4 portrait}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,Arial,sans-serif;color:#1E293B;font-size:10pt;background:#fff;line-height:1.4}
+
+/* COVER */
+.cover{background:#1E293B;color:#fff;padding:16mm 14mm 12mm;border-radius:8px;margin-bottom:10mm}
+.cover-eye{font-size:7.5pt;letter-spacing:.14em;text-transform:uppercase;opacity:.5;margin-bottom:4mm}
+.cover-title{font-size:24pt;font-weight:800;line-height:1.1;margin-bottom:2mm}
+.cover-dates{font-size:11pt;opacity:.7;margin-bottom:5mm}
+.cover-people{display:flex;gap:6px;flex-wrap:wrap}
+.cbadge{border-radius:20px;padding:3px 11px;font-size:8.5pt;font-weight:700;color:#fff}
+
+/* DAYS */
+.day-sec{margin-bottom:7mm;break-inside:avoid}
+.day-hdr{display:flex;align-items:baseline;gap:10px;padding-bottom:2.5mm;border-bottom:2.5px solid #1E293B;margin-bottom:3.5mm}
+.day-dow{font-size:7pt;font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:#94A3B8;min-width:24px}
+.day-date{font-size:13pt;font-weight:700;color:#1E293B}
+
+/* EVENTS */
+.ev-row{display:flex;border-radius:6px;overflow:hidden;margin-bottom:2mm;border:1px solid rgba(0,0,0,.08);break-inside:avoid}
+.ev-tc{width:20mm;flex-shrink:0;display:flex;flex-direction:column;align-items:flex-end;justify-content:center;padding:7px 8px;background:rgba(0,0,0,.03);border-right:1px solid rgba(0,0,0,.07);gap:2px}
+.ev-st{font-size:9.5pt;font-weight:700;line-height:1.2}
+.ev-et{font-size:8pt;color:#64748B;line-height:1.2}
+.ev-body{flex:1;padding:7px 11px;display:flex;flex-direction:column;gap:2.5px}
+.ev-head{display:flex;align-items:center;gap:6px}
+.ev-ico{font-size:11pt;line-height:1}
+.ev-ttl{font-size:10.5pt;font-weight:700;line-height:1.3}
+.ev-multi{display:inline-block;font-size:7.5pt;font-weight:600;color:#92400E;background:#FEF3C7;border-radius:4px;padding:1px 6px;margin-top:1px}
+.ev-loc{font-size:8pt;color:#64748B}
+.ev-notes{font-size:8pt;color:#475569;font-style:italic}
+.ev-who{display:flex;flex-wrap:wrap;gap:3px;margin-top:3px}
+.ebadge{border-radius:10px;padding:1.5px 8px;font-size:7pt;font-weight:700;color:#fff}
+
+/* FOOTER */
+.pfooter{margin-top:10mm;padding-top:3mm;border-top:1px solid #E2E8F0;text-align:center;font-size:7.5pt;color:#94A3B8}
+
+@media print{
+  body{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .day-sec{break-inside:avoid}
+  .ev-row{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div class="cover">
+  <div class="cover-eye">✈️&nbsp; Travel Itinerary</div>
+  <div class="cover-title">Family Trip 2026</div>
+  <div class="cover-dates">${coverDate}</div>
+  <div class="cover-people">${coverBadges}</div>
+</div>
+${daysHtml}
+<div class="pfooter">Generated ${genDate}&nbsp; · &nbsp;Family Trip 2026</div>
+</body>
+</html>`;
+}
+</script>
+
+<!-- MOBILE ADD FAB -->
+<button id="mobileAddBtn" onclick="mobileAdd()" aria-label="Add event">+</button>
+
+</body>
+</html>
