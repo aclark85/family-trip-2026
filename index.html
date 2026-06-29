@@ -718,16 +718,38 @@ async function saveEvent(ev){
   if(!payload.end_time)  payload.end_time=null;
   if(!payload.end_date)  payload.end_date=null;
   if(ev.id){
+    // Diff against existing for audit log
+    const old = events.find(e=>e.id===ev.id);
+    const AUDIT_FIELDS = ['title','date','end_date','start_time','end_time','category','location','timezone','notes','persons'];
+    const entries = AUDIT_FIELDS
+      .map(f=>{
+        const ov = Array.isArray(old?.[f]) ? (old[f]||[]).join(', ') : String(old?.[f]??'');
+        const nv = Array.isArray(payload[f])   ? (payload[f]||[]).join(', ')   : String(payload[f]??'');
+        return ov!==nv ? {event_id:ev.id, event_title:ev.title||'Untitled', field:f, old_value:ov, new_value:nv} : null;
+      })
+      .filter(Boolean);
     const {error} = await sb.from('events').update(payload).eq('id',ev.id);
     if(error) throw error;
+    if(entries.length) sb.from('event_changes').insert(entries).then(()=>{});
   } else {
     const {error} = await sb.from('events').insert(payload);
     if(error) throw error;
+    // Log creation
+    sb.from('event_changes').insert([{
+      event_id: null, event_title: ev.title||'Untitled',
+      field: 'created', old_value: null, new_value: `${ev.date||''} — ${ev.title||''}`.trim()
+    }]).then(()=>{});
   }
   await loadEvents(); render();
 }
 
 async function deleteEvent(id){
+  const ev = events.find(e=>e.id===id);
+  // Log deletion before it happens
+  sb.from('event_changes').insert([{
+    event_id: id, event_title: ev?.title||'Untitled',
+    field: 'deleted', old_value: `${ev?.date||''} — ${ev?.title||''}`.trim(), new_value: null
+  }]).then(()=>{});
   const {error} = await sb.from('events').delete().eq('id',id);
   if(error) throw error;
   await loadEvents(); render(); closeModal();
