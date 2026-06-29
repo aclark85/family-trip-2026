@@ -535,8 +535,8 @@ function isMobile(){ return window.innerWidth < 768; }
 // ─────────────────────────────────────────────────────────────
 (async()=>{
   sb = supabase.createClient(SB_URL, SB_KEY);
-  const tripStart = new Date('2026-06-29');
-  const tripEnd   = new Date('2026-07-28');
+  const tripStart = new Date('2026-06-29T12:00:00');
+  const tripEnd   = new Date('2026-07-28T12:00:00');
   const today     = new Date();
   weekStart = (today>=tripStart && today<=tripEnd) ? mondayOf(today) : mondayOf(tripStart);
 
@@ -1544,7 +1544,7 @@ function tzAbbr(timezone, dateIso){
 function pad(n){ return String(n).padStart(2,'0'); }
 function mondayOf(d){ const dt=new Date(d); const day=dt.getDay(); dt.setDate(dt.getDate()+(day===0?-6:1-day)); dt.setHours(0,0,0,0); return dt; }
 function addDays(d,n){ const r=new Date(d); r.setDate(r.getDate()+n); return r; }
-function fmtDate(d){ return d.toISOString().slice(0,10); }
+function fmtDate(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
 function fmtDateHuman(iso){ const d=new Date(iso+'T12:00:00'); return `${DAYS[(d.getDay()+6)%7]} ${d.getDate()} ${MONTHS[d.getMonth()]}`; }
 function weekDays(start){
   return Array.from({length:7},(_,i)=>{
