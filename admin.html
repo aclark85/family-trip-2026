@@ -52,10 +52,12 @@ table{width:100%;border-collapse:collapse;min-width:1000px}
 /* ── HEAD ── */
 thead{position:sticky;top:0;z-index:5}
 thead tr{background:var(--hdr)}
-th{padding:8px 6px;font-size:10px;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;text-align:left}
+th{padding:8px 6px;font-size:10px;font-weight:700;color:rgba(255,255,255,.75);text-transform:uppercase;letter-spacing:.06em;white-space:nowrap;text-align:left;user-select:none}
 th:first-child{padding-left:14px}
 th:last-child{padding-right:14px}
 th.th-ctr{text-align:center}
+th[onclick]{cursor:pointer}
+th[onclick]:hover{background:#2d3f55;color:#fff}
 
 /* ── ROWS ── */
 tbody tr{border-bottom:1px solid var(--border);transition:background .1s}
@@ -181,23 +183,7 @@ select.ci.tz{font-size:11px}
 
   <div class="tbl-wrap">
     <table id="evTable">
-      <thead>
-        <tr>
-          <th class="td-date" onclick="sortBy('date')" style="cursor:pointer" title="Sort by date">Date ↕</th>
-          <th class="td-enddate">End Date</th>
-          <th class="td-time">Start</th>
-          <th class="td-time">End Time</th>
-          <th class="td-title">Title</th>
-          <th class="td-cat">Category</th>
-          <th class="td-loc">Location</th>
-          <th class="td-tz">Timezone</th>
-          <th class="td-who th-ctr">Who</th>
-          <th class="td-notes">Notes</th>
-          <th class="td-att th-ctr">📎</th>
-          <th class="td-st th-ctr"></th>
-          <th class="td-del th-ctr"></th>
-        </tr>
-      </thead>
+      <thead id="evHead"></thead>
       <tbody id="evBody">
         <tr><td colspan="13" class="empty">Loading events…</td></tr>
       </tbody>
@@ -273,18 +259,43 @@ function getFiltered(){
   if(filterCat!=='all')    evs=evs.filter(e=>e.category===filterCat);
   if(searchQ) evs=evs.filter(e=>(e.title||'').toLowerCase().includes(searchQ)||(e.location||'').toLowerCase().includes(searchQ)||(e.notes||'').toLowerCase().includes(searchQ));
   evs.sort((a,b)=>{
-    let av=a[sortCol]||'', bv=b[sortCol]||'';
+    let av, bv;
+    if(sortCol==='persons'){ av=(a.persons||[]).length; bv=(b.persons||[]).length; }
+    else { av=a[sortCol]||''; bv=b[sortCol]||''; }
     if(av<bv) return sortAsc?-1:1;
     if(av>bv) return sortAsc?1:-1;
-    return (a.start_time||'').localeCompare(b.start_time||'');
+    return (a.date||'').localeCompare(b.date||'') || (a.start_time||'').localeCompare(b.start_time||'');
   });
   return evs;
 }
 
 // ── RENDER ───────────────────────────────────────────────────────
+function si(col){ return col===sortCol ? (sortAsc?' ↑':' ↓') : ' ↕'; }
+
+function buildHead(){
+  const s = (col,lbl,cls='') =>
+    `<th class="${cls}" onclick="sortBy('${col}')" title="Sort by ${lbl}">${lbl}${si(col)}</th>`;
+  return `<tr>
+    ${s('date','Date','td-date')}
+    ${s('end_date','End Date','td-enddate')}
+    ${s('start_time','Start','td-time')}
+    ${s('end_time','End Time','td-time')}
+    ${s('title','Title','td-title')}
+    ${s('category','Category','td-cat')}
+    ${s('location','Location','td-loc')}
+    ${s('timezone','Timezone','td-tz')}
+    ${s('persons','Who','td-who th-ctr')}
+    ${s('notes','Notes','td-notes')}
+    <th class="td-att th-ctr">📎</th>
+    <th class="td-st th-ctr"></th>
+    <th class="td-del th-ctr"></th>
+  </tr>`;
+}
+
 function renderTable(){
   const evs = getFiltered();
   document.getElementById('countLbl').textContent = `${evs.length} event${evs.length!==1?'s':''}`;
+  document.getElementById('evHead').innerHTML = buildHead();
   if(!evs.length){
     document.getElementById('evBody').innerHTML = `<tr><td colspan="13" class="empty">No events match your filters</td></tr>`;
     return;
