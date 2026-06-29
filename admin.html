@@ -457,6 +457,11 @@ async function saveRow(id){
 async function deleteRow(id){
   const ev = allEvents.find(e=>e.id===id);
   if(!confirm(`Delete "${ev?.title||'this event'}"?`)) return;
+  // Log deletion before it happens
+  await sb.from('event_changes').insert([{
+    event_id: id, event_title: ev?.title||'Untitled',
+    field: 'deleted', old_value: `${ev?.date||''} — ${ev?.title||''}`.trim(), new_value: null
+  }]);
   const {error} = await sb.from('events').delete().eq('id',id);
   if(!error){
     allEvents = allEvents.filter(e=>e.id!==id);
@@ -541,6 +546,69 @@ document.addEventListener('keydown', e=>{
     if(gate.style.display!=='none') checkPw();
   }
 });
+
+// ── CHANGE LOG ───────────────────────────────────────────────────
+const FIELD_LABELS = {
+  date:'Date', end_date:'End date', start_time:'Start time', end_time:'End time',
+  title:'Title', category:'Category', location:'Location', timezone:'Timezone',
+  persons:'Who', notes:'Notes', deleted:'🗑️ Deleted'
+};
+
+function timeAgo(ts){
+  const secs = Math.floor((Date.now() - new Date(ts)) / 1000);
+  if(secs < 60)   return 'just now';
+  if(secs < 3600) return `${Math.floor(secs/60)}m ago`;
+  if(secs < 86400) return `${Math.floor(secs/3600)}h ago`;
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-GB',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+}
+
+async function openLog(){
+  document.getElementById('logOverlay').classList.add('open');
+  document.getElementById('logPanel').classList.add('open');
+  document.getElementById('logBody').innerHTML = '<div class="log-loading">Loading…</div>';
+  const {data, error} = await sb.from('event_changes')
+    .select('*').order('changed_at',{ascending:false}).limit(200);
+  logCache = error ? [] : (data||[]);
+  renderLog();
+}
+
+function closeLog(){
+  document.getElementById('logOverlay').classList.remove('open');
+  document.getElementById('logPanel').classList.remove('open');
+}
+
+function filterLog(q){
+  logFilter = q.toLowerCase();
+  renderLog();
+}
+
+function renderLog(){
+  const entries = logFilter
+    ? logCache.filter(e=>(e.event_title||'').toLowerCase().includes(logFilter))
+    : logCache;
+  if(!entries.length){
+    document.getElementById('logBody').innerHTML =
+      `<div class="log-empty">${logCache.length ? 'No matches' : 'No changes logged yet'}</div>`;
+    return;
+  }
+  document.getElementById('logBody').innerHTML = entries.map(e=>{
+    const label = FIELD_LABELS[e.field] || e.field;
+    const isDel = e.field === 'deleted';
+    return `<div class="log-entry${isDel?' log-delete':''}">
+      <div class="log-ev-title">${esc(e.event_title||'—')}</div>
+      <div class="log-change">
+        <span class="log-field">${label}</span>
+        ${!isDel
+          ? `<span class="log-old" title="${esc(e.old_value||'')}">${esc(e.old_value||'—')}</span>
+             <span class="log-arrow">→</span>
+             <span class="log-new" title="${esc(e.new_value||'')}">${esc(e.new_value||'—')}</span>`
+          : `<span class="log-old">${esc(e.old_value||'')}</span>`}
+      </div>
+      <div class="log-time">${timeAgo(e.changed_at)}</div>
+    </div>`;
+  }).join('');
+}
 
 // ── HELPERS ──────────────────────────────────────────────────────
 function esc(s){ return(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
